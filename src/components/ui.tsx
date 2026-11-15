@@ -77,17 +77,22 @@ export function AccountCard({
   balance: number;
 }) {
   return (
-    <div className="card card-hover min-w-[9.5rem] flex-1 p-4">
+    <div className="card card-hover min-w-0 flex-1 overflow-hidden p-3.5 sm:p-4">
       <div className="flex items-center gap-2.5">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-base ring-1 ring-[var(--border)]">
           {typeEmoji[account.type]}
         </span>
-        <span className="truncate text-sm font-bold">{account.name}</span>
+        <span className="min-w-0 truncate text-sm font-bold">{account.name}</span>
       </div>
-      <div className="mt-3 text-xl font-extrabold tabular-nums" style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}>
+      <div
+        className="mt-3 truncate text-lg font-extrabold tabular-nums sm:text-xl"
+        style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}
+      >
         {formatBDT(balance)}
       </div>
-      <div className="mt-0.5 text-xs font-medium text-[var(--muted)]">{ACCOUNT_TYPE_LABEL[account.type]}</div>
+      <div className="mt-0.5 truncate text-xs font-medium text-[var(--muted)]">
+        {ACCOUNT_TYPE_LABEL[account.type]}
+      </div>
     </div>
   );
 }
@@ -130,13 +135,13 @@ export function TxRow({
           {tx.category ? ` · ${tx.category}` : ""}
         </div>
       </div>
-      <div className="text-right">
+      <div className="shrink-0 text-right">
         <div
-          className="text-sm font-bold tabular-nums"
+          className="whitespace-nowrap text-sm font-bold tabular-nums"
           style={{ color: income ? "var(--income)" : "var(--expense)" }}
         >
           {income ? "+" : "−"}
-          {formatBDT(tx.amount).replace("৳", "৳")}
+          {formatBDT(tx.amount)}
         </div>
         <div className="text-xs text-[var(--muted)]">{formatDay(tx.date)}</div>
       </div>

@@ -149,6 +149,7 @@ h3,
 .app-main {
   overflow-x: clip;
   max-width: 100%;
+  min-width: 0;
 }
 
 .sr-only {

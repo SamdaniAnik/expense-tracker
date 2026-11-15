@@ -3,7 +3,7 @@ import { getAccounts, getTransactions, getTransactionsBefore } from "@/lib/data"
 import { excelMonthSummary } from "@/lib/balances";
 import { getExcelMonthSummary, getExcelYears } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
-import { formatBDT, toCents, fromCents } from "@/lib/money";
+import { formatBDT, formatBDTCompact, toCents, fromCents } from "@/lib/money";
 import { getBudgets, budgetProgress } from "@/lib/budgets";
 import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 import HomeMonthPicker from "@/components/HomeMonthPicker";
@@ -137,9 +137,6 @@ export default async function DashboardPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <HomeMonthPicker month={ym} years={years} />
-          <Link href={addHref} className="btn btn-primary text-sm lg:hidden">
-            ＋ Add
-          </Link>
           <Link href={`/months?m=${ym}`} className="btn btn-ghost text-sm hidden sm:inline-flex">
             Full ledger
           </Link>
@@ -150,57 +147,64 @@ export default async function DashboardPage({
       </div>
 
       <div className="mb-6 grid gap-3 lg:grid-cols-12">
-        <div className="hero rise rise-1 p-6 lg:col-span-5">
+        <div className="hero rise rise-1 overflow-hidden p-5 sm:p-6 lg:col-span-5">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">
             Total balance
           </p>
           <p
-            className="mt-2.5 font-display text-4xl font-extrabold tabular-nums sm:text-[2.75rem]"
+            className="mt-2.5 font-display text-3xl font-extrabold tabular-nums tracking-tight sm:text-[2.75rem]"
             style={{ color: excel.closing < 0 ? "#fecdd3" : "#ffffff" }}
           >
             {formatBDT(excel.closing)}
           </p>
-          <div className="mt-4 inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-full bg-white/12 px-3 py-1.5 text-xs font-medium tabular-nums text-white/85 backdrop-blur">
+          <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1 rounded-full bg-white/12 px-3 py-1.5 text-[0.7rem] font-medium tabular-nums text-white/85 backdrop-blur sm:text-xs">
             <span className="text-white/60">Open</span> {formatBDT(excel.opening)}
             <span className="text-emerald-200">+{formatBDT(excel.income)}</span>
             <span className="text-rose-200">−{formatBDT(excel.expense)}</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 lg:col-span-7">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:col-span-7">
           <div
-            className="card card-hover rise rise-2 flex flex-col justify-between p-4"
+            className="card card-hover rise rise-2 flex min-w-0 flex-col justify-between overflow-hidden p-3 sm:p-4"
             style={{ background: "var(--income-soft)", borderColor: "color-mix(in srgb, var(--income) 30%, transparent)" }}
           >
-            <div className="flex items-center gap-1.5">
-              <span className="text-base leading-none" style={{ color: "var(--income)" }}>↑</span>
-              <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--income)" }}>
+            <div className="flex items-center gap-1">
+              <span className="text-sm leading-none sm:text-base" style={{ color: "var(--income)" }}>↑</span>
+              <p className="truncate text-[0.65rem] font-bold uppercase tracking-wide sm:text-xs" style={{ color: "var(--income)" }}>
                 Income
               </p>
             </div>
-            <p className="mt-2 text-xl font-extrabold tabular-nums sm:text-2xl" style={{ color: "var(--income)" }}>
-              {formatBDT(excel.income)}
+            <p className="mt-2 truncate text-sm font-extrabold tabular-nums sm:text-xl lg:text-2xl" style={{ color: "var(--income)" }}>
+              <span className="sm:hidden">{formatBDTCompact(excel.income)}</span>
+              <span className="hidden sm:inline">{formatBDT(excel.income)}</span>
             </p>
           </div>
           <div
-            className="card card-hover rise rise-3 flex flex-col justify-between p-4"
+            className="card card-hover rise rise-3 flex min-w-0 flex-col justify-between overflow-hidden p-3 sm:p-4"
             style={{ background: "var(--expense-soft)", borderColor: "color-mix(in srgb, var(--expense) 30%, transparent)" }}
           >
-            <div className="flex items-center gap-1.5">
-              <span className="text-base leading-none" style={{ color: "var(--expense)" }}>↓</span>
-              <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--expense)" }}>
+            <div className="flex items-center gap-1">
+              <span className="text-sm leading-none sm:text-base" style={{ color: "var(--expense)" }}>↓</span>
+              <p className="truncate text-[0.65rem] font-bold uppercase tracking-wide sm:text-xs" style={{ color: "var(--expense)" }}>
                 Expense
               </p>
             </div>
-            <p className="mt-2 text-xl font-extrabold tabular-nums sm:text-2xl" style={{ color: "var(--expense)" }}>
-              {formatBDT(excel.expense)}
+            <p className="mt-2 truncate text-sm font-extrabold tabular-nums sm:text-xl lg:text-2xl" style={{ color: "var(--expense)" }}>
+              <span className="sm:hidden">{formatBDTCompact(excel.expense)}</span>
+              <span className="hidden sm:inline">{formatBDT(excel.expense)}</span>
             </p>
           </div>
-          <div className="card card-hover rise rise-4 flex flex-col justify-between p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">Opening</p>
-            <div>
-              <p className="mt-2 text-xl font-extrabold tabular-nums sm:text-2xl">{formatBDT(excel.opening)}</p>
-              <p className="text-[0.65rem] text-[var(--faint)]">start of month</p>
+          <div className="card card-hover rise rise-4 flex min-w-0 flex-col justify-between overflow-hidden p-3 sm:p-4">
+            <p className="truncate text-[0.65rem] font-bold uppercase tracking-wide text-[var(--muted)] sm:text-xs">
+              Opening
+            </p>
+            <div className="min-w-0">
+              <p className="mt-2 truncate text-sm font-extrabold tabular-nums sm:text-xl lg:text-2xl">
+                <span className="sm:hidden">{formatBDTCompact(excel.opening)}</span>
+                <span className="hidden sm:inline">{formatBDT(excel.opening)}</span>
+              </p>
+              <p className="truncate text-[0.6rem] text-[var(--faint)] sm:text-[0.65rem]">start of month</p>
             </div>
           </div>
         </div>
