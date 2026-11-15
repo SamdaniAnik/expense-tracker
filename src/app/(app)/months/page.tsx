@@ -20,24 +20,6 @@ function defaultAddDate(month: string) {
   return `${month}-01`;
 }
 
-/** Starting overall for a month = openings by month-start + all prior txns. */
-function monthStartingPaisa(
-  accounts: Pick<Account, "opening_balance" | "opening_date">[],
-  allTxns: Pick<Transaction, "date" | "type" | "amount">[],
-  monthStart: string,
-): number {
-  let paisa = 0;
-  for (const a of accounts) {
-    if (a.opening_date <= monthStart) paisa += toPaisa(a.opening_balance);
-  }
-  for (const t of allTxns) {
-    if (t.date < monthStart) {
-      paisa += t.type === "income" ? toPaisa(t.amount) : -toPaisa(t.amount);
-    }
-  }
-  return paisa;
-}
-
 export default async function MonthsPage({
   searchParams,
 }: {
