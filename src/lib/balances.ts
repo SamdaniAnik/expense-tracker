@@ -71,3 +71,65 @@ export function totals(
     net: fromPaisa(incomeP - expenseP),
   };
 }
+
+/** Day before YYYY-MM-01, as ISO date. */
+export function dayBeforeMonth(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1, 0)); // day 0 of this month = last day of prev
+  return d.toISOString().slice(0, 10);
+}
+
+/** Last day of YYYY-MM. */
+export function lastDayOfMonth(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m, 0));
+  return d.toISOString().slice(0, 10);
+}
+
+/** Overall balance using openings started by `asOfDate` + txns on/before it. */
+export function overallBalanceAsOf(
+  accounts: Pick<Account, "id" | "opening_balance" | "opening_date">[],
+  txns: Pick<Transaction, "account_id" | "type" | "amount" | "date">[],
+  asOfDate: string,
+): number {
+  let paisa = 0;
+  for (const a of accounts) {
+    if (a.opening_date > asOfDate) continue;
+    paisa += toPaisa(a.opening_balance);
+  }
+  for (const t of txns) {
+    if (t.date <= asOfDate) paisa += signedPaisa(t);
+  }
+  return fromPaisa(paisa);
+}
+
+/** Balance of one account as of a date (inclusive). */
+export function accountBalanceAsOf(
+  account: Pick<Account, "id" | "opening_balance" | "opening_date">,
+  txns: Pick<Transaction, "account_id" | "type" | "amount" | "date">[],
+  asOfDate: string,
+): number {
+  if (account.opening_date > asOfDate) return 0;
+  let paisa = toPaisa(account.opening_balance);
+  for (const t of txns) {
+    if (t.account_id === account.id && t.date <= asOfDate) {
+      paisa += signedPaisa(t);
+    }
+  }
+  return fromPaisa(paisa);
+}
+
+/**
+ * Excel-style running overall balance through ordered rows.
+ * `startPaisa` is the overall balance *before* the first row.
+ */
+export function runningOverallBalances(
+  startPaisa: number,
+  txns: Pick<Transaction, "type" | "amount">[],
+): number[] {
+  let paisa = startPaisa;
+  return txns.map((t) => {
+    paisa += signedPaisa(t);
+    return fromPaisa(paisa);
+  });
+}

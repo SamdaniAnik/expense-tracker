@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { getAccounts, getTransactions } from "@/lib/data";
-import { formatBDT } from "@/lib/money";
-import { toPaisa, fromPaisa } from "@/lib/money";
+import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
+import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
+import {
+  accountBalanceAsOf,
+  runningOverallBalances,
+} from "@/lib/balances";
 import { StatTile, Empty } from "@/components/ui";
 import MonthJump from "@/components/MonthJump";
-import type { Transaction } from "@/lib/types";
+import type { Account, Transaction } from "@/lib/types";
 
 function shiftMonth(ym: string, delta: number) {
   const [y, m] = ym.split("-").map(Number);
@@ -19,6 +22,24 @@ function defaultAddDate(month: string) {
   return `${month}-01`;
 }
 
+/** Opening overall for a month = openings started by month-start + all prior txns. */
+function monthOpeningPaisa(
+  accounts: Pick<Account, "opening_balance" | "opening_date">[],
+  allTxns: Pick<Transaction, "date" | "type" | "amount">[],
+  monthStart: string,
+): number {
+  let paisa = 0;
+  for (const a of accounts) {
+    if (a.opening_date <= monthStart) paisa += toPaisa(a.opening_balance);
+  }
+  for (const t of allTxns) {
+    if (t.date < monthStart) {
+      paisa += t.type === "income" ? toPaisa(t.amount) : -toPaisa(t.amount);
+    }
+  }
+  return paisa;
+}
+
 export default async function MonthsPage({
   searchParams,
 }: {
@@ -28,16 +49,26 @@ export default async function MonthsPage({
   const now = new Date();
   const month =
     sp.m ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const monthStart = `${month}-01`;
 
-  const [accounts, txnsRaw] = await Promise.all([
+  const [accounts, allTxns, monthTxnsRaw] = await Promise.all([
     getAccounts(),
+    getAllTransactions(),
     getTransactions({ month }),
   ]);
 
+  const active = accounts.filter((a) => !a.archived);
+
   // Excel-style: chronological within the month (oldest → newest)
-  const txns = [...(txnsRaw as Transaction[])].sort((a, b) =>
-    a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at),
+  const txns = [...(monthTxnsRaw as Transaction[])].sort(
+    (a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at),
   );
+
+  const startPaisa = monthOpeningPaisa(active, allTxns, monthStart);
+  const openingOverall = fromPaisa(startPaisa);
+  const running = runningOverallBalances(startPaisa, txns);
+  const closingOverall =
+    running.length > 0 ? running[running.length - 1]! : openingOverall;
 
   let incomeP = 0;
   let expenseP = 0;
@@ -46,6 +77,15 @@ export default async function MonthsPage({
     if (t.type === "income") incomeP += p;
     else expenseP += p;
   }
+
+  // Beginning Balance rows per account (like the spreadsheet)
+  const priorTxns = allTxns.filter((t) => t.date < monthStart);
+  const beginRows = active
+    .filter((a) => a.opening_date <= monthStart)
+    .map((a) => ({
+      account: a,
+      balance: accountBalanceAsOf(a, priorTxns, monthStart),
+    }));
 
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const label = new Date(month + "-01T00:00:00").toLocaleDateString("en-GB", {
@@ -76,6 +116,30 @@ export default async function MonthsPage({
         </Link>
       </div>
 
+      {/* Excel-style overall balance */}
+      <div className="mb-3 card p-4">
+        <p className="text-sm font-semibold text-[var(--muted)]">Overall balance</p>
+        <div className="mt-2 grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-[var(--muted)]">Opening (start of month)</p>
+            <p className="text-xl font-extrabold tabular-nums">{formatBDT(openingOverall)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-[var(--muted)]">Closing (end of month)</p>
+            <p
+              className="text-2xl font-extrabold tabular-nums"
+              style={{ color: closingOverall < 0 ? "var(--expense)" : "var(--text)" }}
+            >
+              {formatBDT(closingOverall)}
+            </p>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-[var(--muted)]">
+          Closing = Opening + Income − Expense ({formatBDT(openingOverall)} +{" "}
+          {formatBDT(fromPaisa(incomeP))} − {formatBDT(fromPaisa(expenseP))})
+        </p>
+      </div>
+
       <div className="grid grid-cols-3 gap-2.5">
         <StatTile label="Income" value={fromPaisa(incomeP)} tone="income" />
         <StatTile label="Expense" value={fromPaisa(expenseP)} tone="expense" />
@@ -90,7 +154,7 @@ export default async function MonthsPage({
         Ledger
       </h2>
 
-      {txns.length === 0 ? (
+      {txns.length === 0 && beginRows.length === 0 ? (
         <Empty>
           No rows in {label}.{" "}
           <Link href={addHref} className="font-semibold text-[var(--primary)]">
@@ -101,7 +165,7 @@ export default async function MonthsPage({
       ) : (
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[36rem] border-collapse text-sm">
+            <table className="w-full min-w-[44rem] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
                   <th className="px-3 py-2.5 font-semibold">Date</th>
@@ -109,10 +173,47 @@ export default async function MonthsPage({
                   <th className="px-3 py-2.5 font-semibold">Account</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Income</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Expense</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">Overall Balance</th>
                 </tr>
               </thead>
               <tbody>
-                {txns.map((t) => (
+                {beginRows.map(({ account, balance }) => (
+                  <tr
+                    key={`begin-${account.id}`}
+                    className="border-b border-[var(--border)] bg-[var(--surface-2)]/50"
+                  >
+                    <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-[var(--muted)]">
+                      {new Date(monthStart + "T00:00:00").toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </td>
+                    <td className="px-3 py-2.5 font-medium">Beginning Balance</td>
+                    <td className="whitespace-nowrap px-3 py-2.5">{account.name}</td>
+                    <td className="px-3 py-2.5" />
+                    <td className="px-3 py-2.5" />
+                    <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-[var(--muted)]">
+                      {/* Sheet shows per-account balance on begin rows */}
+                      {formatBDT(balance)}
+                      <div className="text-[0.65rem] font-normal normal-case tracking-normal">
+                        account bal.
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {/* Overall opening marker (sum of accounts) */}
+                <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]">
+                  <td className="px-3 py-2.5 text-[var(--muted)]" colSpan={5}>
+                    <span className="font-semibold text-[var(--text)]">Overall opening</span>
+                    <span className="text-xs"> — start of {label}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums font-extrabold">
+                    {formatBDT(openingOverall)}
+                  </td>
+                </tr>
+
+                {txns.map((t, i) => (
                   <tr
                     key={t.id}
                     className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)]/60"
@@ -148,19 +249,25 @@ export default async function MonthsPage({
                     >
                       {t.type === "expense" ? formatBDT(t.amount) : ""}
                     </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums font-bold">
+                      {formatBDT(running[i]!)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="bg-[var(--surface-2)] text-sm font-bold">
                   <td className="px-3 py-2.5" colSpan={3}>
-                    Month total
+                    Month total / closing overall
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--income)" }}>
                     {formatBDT(fromPaisa(incomeP))}
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--expense)" }}>
                     {formatBDT(fromPaisa(expenseP))}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">
+                    {formatBDT(closingOverall)}
                   </td>
                 </tr>
               </tfoot>
