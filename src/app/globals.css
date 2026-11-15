@@ -145,27 +145,10 @@ h3,
   }
 }
 
-/* Phone / tablet visitors always get the mobile chrome (bottom nav), even if
-   the browser switches to a wide “Desktop site” viewport. */
-html[data-shell="mobile"] {
+/* Keep pages from sideways-scrolling on phones without breaking fixed nav */
+.app-main {
   overflow-x: clip;
-}
-html[data-shell="mobile"] body {
-  overflow-x: clip;
-}
-html[data-shell="mobile"] .shell-side-nav {
-  display: none !important;
-}
-html[data-shell="mobile"] .shell-bottom-nav {
-  display: block !important;
-}
-html[data-shell="mobile"] .shell-desktop-fab,
-html[data-shell="mobile"] .shell-desktop-fab a {
-  display: none !important;
-}
-html[data-shell="mobile"] .app-main {
-  max-width: 40rem;
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
+  max-width: 100%;
 }
 
 .sr-only {

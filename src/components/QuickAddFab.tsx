@@ -13,7 +13,7 @@ export default function QuickAddFab() {
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   return (
-    <div className="shell-desktop-fab pointer-events-none fixed bottom-24 right-4 z-30 flex flex-col items-end gap-2 lg:bottom-8 lg:right-8">
+    <div className="pointer-events-none fixed bottom-24 right-4 z-30 flex flex-col items-end gap-2 lg:bottom-8 lg:right-8">
       <Link
         href={`/transfer`}
         className="pointer-events-auto hidden rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs font-bold shadow-[var(--shadow-md)] lg:inline-flex"
