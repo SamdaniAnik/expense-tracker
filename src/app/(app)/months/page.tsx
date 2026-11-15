@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
 import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
-import {
-  accountBalanceAsOf,
-  runningOverallBalances,
-} from "@/lib/balances";
+import { accountBalanceAsOf } from "@/lib/balances";
 import { StatTile, Empty } from "@/components/ui";
 import MonthJump from "@/components/MonthJump";
 import type { Account, Transaction } from "@/lib/types";
@@ -22,8 +19,8 @@ function defaultAddDate(month: string) {
   return `${month}-01`;
 }
 
-/** Opening overall for a month = openings started by month-start + all prior txns. */
-function monthOpeningPaisa(
+/** Starting overall for a month = openings by month-start + all prior txns. */
+function monthStartingPaisa(
   accounts: Pick<Account, "opening_balance" | "opening_date">[],
   allTxns: Pick<Transaction, "date" | "type" | "amount">[],
   monthStart: string,
@@ -59,16 +56,13 @@ export default async function MonthsPage({
 
   const active = accounts.filter((a) => !a.archived);
 
-  // Excel-style: chronological within the month (oldest → newest)
   const txns = [...(monthTxnsRaw as Transaction[])].sort(
     (a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at),
   );
 
-  const startPaisa = monthOpeningPaisa(active, allTxns, monthStart);
-  const openingOverall = fromPaisa(startPaisa);
-  const running = runningOverallBalances(startPaisa, txns);
-  const closingOverall =
-    running.length > 0 ? running[running.length - 1]! : openingOverall;
+  // Excel "Overall Balance" column = starting balance of the month
+  const startPaisa = monthStartingPaisa(active, allTxns, monthStart);
+  const startingOverall = fromPaisa(startPaisa);
 
   let incomeP = 0;
   let expenseP = 0;
@@ -78,12 +72,15 @@ export default async function MonthsPage({
     else expenseP += p;
   }
 
-  // Beginning Balance rows per account (like the spreadsheet)
+  // Yellow cell in the sheet
+  const closingOverall = fromPaisa(startPaisa + incomeP - expenseP);
+
   const priorTxns = allTxns.filter((t) => t.date < monthStart);
   const beginRows = active
     .filter((a) => a.opening_date <= monthStart)
     .map((a) => ({
       account: a,
+      // Per-account starting balance for this month (Excel Beginning Balance rows)
       balance: accountBalanceAsOf(a, priorTxns, monthStart),
     }));
 
@@ -116,28 +113,29 @@ export default async function MonthsPage({
         </Link>
       </div>
 
-      {/* Excel-style overall balance */}
-      <div className="mb-3 card p-4">
-        <p className="text-sm font-semibold text-[var(--muted)]">Overall balance</p>
-        <div className="mt-2 grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-[var(--muted)]">Opening (start of month)</p>
-            <p className="text-xl font-extrabold tabular-nums">{formatBDT(openingOverall)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-[var(--muted)]">Closing (end of month)</p>
-            <p
-              className="text-2xl font-extrabold tabular-nums"
-              style={{ color: closingOverall < 0 ? "var(--expense)" : "var(--text)" }}
-            >
-              {formatBDT(closingOverall)}
-            </p>
-          </div>
+      <div className="mb-3 grid gap-2.5 sm:grid-cols-2">
+        <div className="card p-4">
+          <p className="text-xs font-medium text-[var(--muted)]">
+            Overall balance (start of month)
+          </p>
+          <p className="mt-1 text-2xl font-extrabold tabular-nums">
+            {formatBDT(startingOverall)}
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Same as Excel Overall Balance column
+          </p>
         </div>
-        <p className="mt-2 text-xs text-[var(--muted)]">
-          Closing = Opening + Income − Expense ({formatBDT(openingOverall)} +{" "}
-          {formatBDT(fromPaisa(incomeP))} − {formatBDT(fromPaisa(expenseP))})
-        </p>
+        <div className="card p-4" style={{ background: "#fef9c3", borderColor: "#fde047" }}>
+          <p className="text-xs font-medium" style={{ color: "#854d0e" }}>
+            Closing (yellow cell)
+          </p>
+          <p className="mt-1 text-2xl font-extrabold tabular-nums" style={{ color: "#121826" }}>
+            {formatBDT(closingOverall)}
+          </p>
+          <p className="mt-1 text-xs" style={{ color: "#a16207" }}>
+            Start + Income − Expense
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
@@ -173,7 +171,12 @@ export default async function MonthsPage({
                   <th className="px-3 py-2.5 font-semibold">Account</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Income</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Expense</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Overall Balance</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    Overall Balance
+                    <div className="font-normal normal-case tracking-normal text-[0.65rem]">
+                      start of month
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -192,28 +195,13 @@ export default async function MonthsPage({
                     <td className="whitespace-nowrap px-3 py-2.5">{account.name}</td>
                     <td className="px-3 py-2.5" />
                     <td className="px-3 py-2.5" />
-                    <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-[var(--muted)]">
-                      {/* Sheet shows per-account balance on begin rows */}
+                    <td className="px-3 py-2.5 text-right tabular-nums font-semibold">
                       {formatBDT(balance)}
-                      <div className="text-[0.65rem] font-normal normal-case tracking-normal">
-                        account bal.
-                      </div>
                     </td>
                   </tr>
                 ))}
 
-                {/* Overall opening marker (sum of accounts) */}
-                <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]">
-                  <td className="px-3 py-2.5 text-[var(--muted)]" colSpan={5}>
-                    <span className="font-semibold text-[var(--text)]">Overall opening</span>
-                    <span className="text-xs"> — start of {label}</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums font-extrabold">
-                    {formatBDT(openingOverall)}
-                  </td>
-                </tr>
-
-                {txns.map((t, i) => (
+                {txns.map((t) => (
                   <tr
                     key={t.id}
                     className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)]/60"
@@ -249,24 +237,41 @@ export default async function MonthsPage({
                     >
                       {t.type === "expense" ? formatBDT(t.amount) : ""}
                     </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums font-bold">
-                      {formatBDT(running[i]!)}
-                    </td>
+                    {/* Excel leaves this blank on day-to-day rows */}
+                    <td className="px-3 py-2.5" />
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-[var(--surface-2)] text-sm font-bold">
+                {/* Excel summary row: Income | Expense | Overall Balance (starting) */}
+                <tr className="border-t border-[var(--border)] bg-[var(--surface-2)] text-sm font-bold">
                   <td className="px-3 py-2.5" colSpan={3}>
-                    Month total / closing overall
+                    Month totals
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--income)" }}>
+                  <td
+                    className="px-3 py-2.5 text-right tabular-nums"
+                    style={{ background: "#ecfdf5", color: "#047857" }}
+                  >
                     {formatBDT(fromPaisa(incomeP))}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--expense)" }}>
+                  <td
+                    className="px-3 py-2.5 text-right tabular-nums"
+                    style={{ background: "#fff1f2", color: "#be123c" }}
+                  >
                     {formatBDT(fromPaisa(expenseP))}
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums">
+                    {formatBDT(startingOverall)}
+                    <div className="text-[0.65rem] font-normal text-[var(--muted)]">
+                      start of month
+                    </div>
+                  </td>
+                </tr>
+                <tr className="text-sm font-bold" style={{ background: "#fef08a" }}>
+                  <td className="px-3 py-2.5" colSpan={5} style={{ color: "#854d0e" }}>
+                    Closing overall (yellow)
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "#121826" }}>
                     {formatBDT(closingOverall)}
                   </td>
                 </tr>

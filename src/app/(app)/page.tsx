@@ -73,8 +73,9 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="card p-3.5">
-          <div className="text-xs font-medium text-[var(--muted)]">Opening</div>
+          <div className="text-xs font-medium text-[var(--muted)]">Overall balance</div>
           <div className="mt-1 text-lg font-bold tabular-nums">{formatBDT(excel.opening)}</div>
+          <div className="text-[0.65rem] text-[var(--muted)]">start of month</div>
         </div>
       </div>
       <p className="mb-4 text-xs text-[var(--muted)]">
