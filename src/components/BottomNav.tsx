@@ -6,26 +6,29 @@ import { HomeIcon, ListIcon, ChartIcon, WalletIcon, PlusIcon } from "./icons";
 
 const items = [
   { href: "/", label: "Home", Icon: HomeIcon, match: (p: string) => p === "/" },
-  { href: "/transactions", label: "Activity", Icon: ListIcon, match: (p: string) => p.startsWith("/transactions") },
-  { href: "/insights", label: "Insights", Icon: ChartIcon, match: (p: string) => p.startsWith("/insights") || p.startsWith("/months") },
+  { href: "/months", label: "Months", Icon: ListIcon, match: (p: string) => p.startsWith("/months") || p.startsWith("/transactions") },
+  { href: "/insights", label: "Insights", Icon: ChartIcon, match: (p: string) => p.startsWith("/insights") },
   { href: "/accounts", label: "Accounts", Icon: WalletIcon, match: (p: string) => p.startsWith("/accounts") },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const addHref = `/add?m=${month}`;
 
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="mx-auto flex max-w-md items-center justify-around px-2">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-around px-2">
         {items.slice(0, 2).map(({ href, label, Icon, match }) => (
           <NavLink key={href} href={href} label={label} Icon={Icon} active={match(pathname)} />
         ))}
 
         <Link
-          href="/add"
+          href={addHref}
           aria-label="Add transaction"
           className="relative -mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-[var(--primary-ink)] shadow-lg active:translate-y-px"
         >

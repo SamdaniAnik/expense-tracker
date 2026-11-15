@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { getAccounts, getAllTransactions } from "@/lib/data";
+import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
 import { overallBalance, accountBalance, monthTotals } from "@/lib/balances";
 import { formatBDT } from "@/lib/money";
 import { StatTile, SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 
 export default async function DashboardPage() {
-  const [accounts, txns] = await Promise.all([
+  const [accounts, txns, recent] = await Promise.all([
     getAccounts(),
     getAllTransactions(),
+    getTransactions({ limit: 8 }),
   ]);
 
   const active = accounts.filter((a) => !a.archived);
@@ -15,7 +16,6 @@ export default async function DashboardPage() {
   const now = new Date();
   const month = monthTotals(txns, now.getFullYear(), now.getMonth() + 1);
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
-  const recent = txns.slice(0, 8);
   const monthLabel = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 
   return (
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <SectionTitle action={<Link href="/transactions" className="text-xs font-semibold text-[var(--primary)]">See all</Link>}>
+      <SectionTitle action={<Link href="/months" className="text-xs font-semibold text-[var(--primary)]">By month</Link>}>
         Recent
       </SectionTitle>
       {recent.length === 0 ? (

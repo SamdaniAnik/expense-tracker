@@ -41,9 +41,11 @@ export async function createTx(formData: FormData) {
   const { error } = await supabase.from("transactions").insert({ ...v, user_id: user.id });
   if (error) return { error: error.message };
 
+  const returnTo = String(formData.get("return_to") ?? "").trim();
   revalidatePath("/");
   revalidatePath("/transactions");
-  redirect("/");
+  revalidatePath("/months");
+  redirect(returnTo.startsWith("/") ? returnTo : "/");
 }
 
 export async function updateTx(id: string, formData: FormData) {
@@ -62,14 +64,23 @@ export async function updateTx(id: string, formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/transactions");
-  redirect("/transactions");
+  revalidatePath("/months");
+  const month = v.date.slice(0, 7);
+  redirect(month ? `/months?m=${month}` : "/transactions");
 }
 
 export async function deleteTx(id: string) {
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("transactions")
+    .select("date")
+    .eq("id", id)
+    .maybeSingle();
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/");
   revalidatePath("/transactions");
-  redirect("/transactions");
+  revalidatePath("/months");
+  const month = existing?.date ? String(existing.date).slice(0, 7) : "";
+  redirect(month ? `/months?m=${month}` : "/transactions");
 }

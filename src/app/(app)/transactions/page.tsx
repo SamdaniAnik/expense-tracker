@@ -18,10 +18,10 @@ export default async function TransactionsPage({
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const sum = totals(txns);
 
-  // group by date
+  // group by date (newest first — txns are already date-desc from the query)
   const groups: Record<string, Transaction[]> = {};
   for (const t of txns) (groups[t.date] ??= []).push(t);
-  const dates = Object.keys(groups);
+  const dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
   return (
     <div>

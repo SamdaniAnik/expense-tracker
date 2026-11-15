@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "seed": "node --env-file=.env.local --import tsx scripts/import/seed.ts"
+    "seed": "node --env-file=.env.local --import tsx scripts/import/seed.ts",
+    "seed:google": "node --env-file=.env.local --import tsx scripts/import/from-google.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -26,11 +27,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^4.1.12"
+    "vitest": "^4.1.12",
+    "ws": "^8.23.0",
+    "xlsx": "^0.18.5"
   }
 }

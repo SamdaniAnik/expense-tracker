@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*
+
+# local Google Sheet downloads (personal finance data)
+scripts/import/google-sheet.xlsx
+scripts/import/google-sheet.csv

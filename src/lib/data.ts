@@ -58,7 +58,8 @@ export async function getAllTransactions(): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from("transactions")
     .select("id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at")
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Transaction[];
 }

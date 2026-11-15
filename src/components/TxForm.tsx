@@ -11,6 +11,8 @@ export default function TxForm({
   accounts,
   categories,
   initial,
+  defaultDate,
+  returnTo,
   onSubmit,
   onDelete,
   submitLabel = "Save",
@@ -18,6 +20,10 @@ export default function TxForm({
   accounts: Account[];
   categories: string[];
   initial?: Transaction;
+  /** Prefill date when creating (e.g. for a specific month ledger). */
+  defaultDate?: string;
+  /** Hidden return path after save (e.g. /months?m=2026-11). */
+  returnTo?: string;
   onSubmit: (formData: FormData) => Promise<Result>;
   onDelete?: () => Promise<Result>;
   submitLabel?: string;
@@ -30,6 +36,7 @@ export default function TxForm({
   const [pending, startTransition] = useTransition();
 
   const today = new Date().toISOString().slice(0, 10);
+  const dateValue = initial?.date ?? defaultDate ?? today;
 
   function handleSubmit(formData: FormData) {
     formData.set("type", type);
@@ -46,6 +53,7 @@ export default function TxForm({
 
   return (
     <form action={handleSubmit} className="space-y-4">
+      {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
       {/* income / expense toggle */}
       <div className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-2)] p-1">
         <button
@@ -98,7 +106,7 @@ export default function TxForm({
         </div>
         <div>
           <label className="label" htmlFor="date">Date</label>
-          <input id="date" name="date" type="date" defaultValue={initial?.date ?? today} className="input" required />
+          <input id="date" name="date" type="date" defaultValue={dateValue} className="input" required />
         </div>
       </div>
 

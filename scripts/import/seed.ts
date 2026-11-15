@@ -6,6 +6,7 @@
  * Needs env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SEED_USER_ID
  */
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import { parseRows } from "./parse";
 import { reconcile } from "./reconcile";
 import { RAW_ROWS } from "./data";
@@ -25,6 +26,8 @@ if (!userId || userId.startsWith("0000")) die("Set SEED_USER_ID (your auth user 
 
 const supabase = createClient(url!, serviceKey!, {
   auth: { persistSession: false },
+  // Node 20 has no global WebSocket; seed only needs REST, but the client still boots Realtime.
+  realtime: { transport: ws as unknown as typeof WebSocket },
 });
 
 async function main() {
