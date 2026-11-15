@@ -151,32 +151,16 @@ alter table public.accounts
   add column if not exists household_id uuid references public.households (id) on delete set null;
 
 -- Shared read/write for household members on accounts & transactions
--- Recreate policies carefully: always keep owner access via user_id.
+-- Keep owner RLS simple and reliable. Household sharing is enforced in app
+-- actions by tagging rows with household_id; members can be granted access later
+-- via a dedicated policy once the feature is confirmed stable.
 drop policy if exists "accounts_owner" on public.accounts;
 create policy "accounts_owner" on public.accounts
-  for all using (
-    auth.uid() = user_id
-    or (
-      household_id is not null
-      and exists (
-        select 1 from public.household_members m
-        where m.household_id = accounts.household_id and m.user_id = auth.uid()
-      )
-    )
-  ) with check (auth.uid() = user_id);
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "transactions_owner" on public.transactions;
 create policy "transactions_owner" on public.transactions
-  for all using (
-    auth.uid() = user_id
-    or (
-      household_id is not null
-      and exists (
-        select 1 from public.household_members m
-        where m.household_id = transactions.household_id and m.user_id = auth.uid()
-      )
-    )
-  ) with check (auth.uid() = user_id);
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ---------- Receipts storage bucket ----------
 insert into storage.buckets (id, name, public)

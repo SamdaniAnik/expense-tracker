@@ -18,7 +18,10 @@ export const getAccounts = cache(async (): Promise<Account[]> => {
     .select("id,user_id,name,type,currency,opening_balance,opening_date,sort_order,archived")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
-  if (error) throw error;
+  if (error) {
+    // Surface a clear message (often RLS misconfigured after features.sql)
+    throw new Error(error.message || "Failed to load accounts");
+  }
   return (data ?? []) as Account[];
 });
 

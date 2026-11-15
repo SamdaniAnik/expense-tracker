@@ -1,34 +1,34 @@
--- Emergency repair: restore simple owner RLS if pages fail after features.sql
--- Safe to run anytime. Does NOT remove household sharing columns.
+-- Emergency repair — run this in Supabase SQL editor if the app returns 500 when logged in.
+-- Restores simple owner-only RLS (no household_id dependency).
 
 drop policy if exists "accounts_owner" on public.accounts;
 create policy "accounts_owner" on public.accounts
-  for all using (
-    auth.uid() = user_id
-    or (
-      coalesce(household_id, '00000000-0000-0000-0000-000000000000'::uuid)
-        is distinct from '00000000-0000-0000-0000-000000000000'::uuid
-      and exists (
-        select 1 from public.household_members m
-        where m.household_id = accounts.household_id and m.user_id = auth.uid()
-      )
-    )
-  ) with check (auth.uid() = user_id);
-
--- If household_id column is missing, the above fails — use this simpler fallback instead:
--- drop policy if exists "accounts_owner" on public.accounts;
--- create policy "accounts_owner" on public.accounts
---   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "transactions_owner" on public.transactions;
 create policy "transactions_owner" on public.transactions
-  for all using (
-    auth.uid() = user_id
-    or (
-      household_id is not null
-      and exists (
-        select 1 from public.household_members m
-        where m.household_id = transactions.household_id and m.user_id = auth.uid()
-      )
-    )
-  ) with check (auth.uid() = user_id);
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Optional: only if these tables exist
+do $$ begin
+  if to_regclass('public.budgets') is not null then
+    execute 'alter table public.budgets enable row level security';
+    execute 'drop policy if exists "budgets_owner" on public.budgets';
+    execute 'create policy "budgets_owner" on public.budgets for all using (auth.uid() = user_id) with check (auth.uid() = user_id)';
+  end if;
+  if to_regclass('public.recurring_rules') is not null then
+    execute 'alter table public.recurring_rules enable row level security';
+    execute 'drop policy if exists "recurring_owner" on public.recurring_rules';
+    execute 'create policy "recurring_owner" on public.recurring_rules for all using (auth.uid() = user_id) with check (auth.uid() = user_id)';
+  end if;
+  if to_regclass('public.debts') is not null then
+    execute 'alter table public.debts enable row level security';
+    execute 'drop policy if exists "debts_owner" on public.debts';
+    execute 'create policy "debts_owner" on public.debts for all using (auth.uid() = user_id) with check (auth.uid() = user_id)';
+  end if;
+  if to_regclass('public.gift_entries') is not null then
+    execute 'alter table public.gift_entries enable row level security';
+    execute 'drop policy if exists "gift_entries_owner" on public.gift_entries';
+    execute 'create policy "gift_entries_owner" on public.gift_entries for all using (auth.uid() = user_id) with check (auth.uid() = user_id)';
+  end if;
+end $$;

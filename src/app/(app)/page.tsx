@@ -21,7 +21,7 @@ function monthFlow(txns: Transaction[]) {
   let expenseP = 0;
   for (const t of txns) {
     if (t.is_transfer) continue;
-    const p = toPaisa(Number(t.amount));
+    const p = toPaisa(Number(t.amount) || 0);
     if (t.type === "income") incomeP += p;
     else expenseP += p;
   }
@@ -32,7 +32,6 @@ function monthFlow(txns: Transaction[]) {
   };
 }
 
-/** End-of-month balance without loading full history when Excel openings exist. */
 function monthEndBalance(
   account: Account,
   monthTxns: Transaction[],
@@ -42,7 +41,7 @@ function monthEndBalance(
     typeof sheetOpening === "number" ? toPaisa(sheetOpening) : toPaisa(account.opening_balance);
   for (const t of monthTxns) {
     if (t.account_id !== account.id) continue;
-    paisa += t.type === "income" ? toPaisa(t.amount) : -toPaisa(t.amount);
+    paisa += t.type === "income" ? toPaisa(Number(t.amount) || 0) : -toPaisa(Number(t.amount) || 0);
   }
   return fromPaisa(paisa);
 }
@@ -56,16 +55,33 @@ export default async function DashboardPage({
   const now = new Date();
   const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const ym = sp.m && /^\d{4}-\d{2}$/.test(sp.m) ? sp.m : fallback;
-
   const prevYm = shiftYm(ym, -1);
   const sheet = getExcelMonthSummary(ym);
-  const [accounts, monthTxns, priorTxns, prevTxns, budgets] = await Promise.all([
-    getAccounts(),
-    getTransactions({ month: ym, lean: true }),
-    sheet ? Promise.resolve([]) : getTransactionsBefore(`${ym}-01`),
-    getTransactions({ month: prevYm, lean: true }),
-    getBudgets(),
-  ]);
+
+  let accounts: Account[] = [];
+  let monthTxns: Transaction[] = [];
+  let priorTxns: Transaction[] = [];
+  let prevTxns: Transaction[] = [];
+  let budgets: Awaited<ReturnType<typeof getBudgets>> = [];
+  let loadError: string | null = null;
+
+  try {
+    const results = await Promise.all([
+      getAccounts(),
+      getTransactions({ month: ym, lean: true }),
+      sheet ? Promise.resolve([] as Transaction[]) : getTransactionsBefore(`${ym}-01`),
+      getTransactions({ month: prevYm, lean: true }),
+      getBudgets(),
+    ]);
+    accounts = results[0];
+    monthTxns = results[1];
+    priorTxns = results[2];
+    prevTxns = results[3];
+    budgets = results[4];
+  } catch (e) {
+    loadError = e instanceof Error ? e.message : "Failed to load data from Supabase.";
+    console.error("Home load failed:", e);
+  }
 
   const active = accounts.filter((a) => !a.archived);
   const excel = excelMonthSummary(
@@ -75,9 +91,11 @@ export default async function DashboardPage({
     sheet,
   );
 
-  const recent = [...monthTxns].sort(
-    (a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at),
-  );
+  const recent = [...monthTxns].sort((a, b) => {
+    const d = b.date.localeCompare(a.date);
+    if (d !== 0) return d;
+    return String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+  });
 
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const monthLabel = new Date(ym + "-01T00:00:00").toLocaleDateString("en-GB", {
@@ -96,6 +114,18 @@ export default async function DashboardPage({
 
   return (
     <div className="pb-2">
+      {loadError ? (
+        <div className="mb-4 rounded-xl border border-[var(--expense)] bg-[var(--expense-soft)] p-4 text-sm">
+          <p className="font-semibold" style={{ color: "var(--expense)" }}>
+            Couldn’t load live data
+          </p>
+          <p className="mt-1 text-[var(--muted)]">{loadError}</p>
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            Run <code>supabase/fix-rls.sql</code> in the Supabase SQL editor, then reload.
+          </p>
+        </div>
+      ) : null}
+
       <div className="mb-6 flex flex-col gap-4 rise sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">
@@ -328,13 +358,13 @@ export default async function DashboardPage({
                             className="px-4 py-2.5 text-right tabular-nums font-semibold"
                             style={{ color: "var(--income)" }}
                           >
-                            {t.type === "income" ? formatBDT(t.amount) : ""}
+                            {t.type === "income" ? formatBDT(Number(t.amount)) : ""}
                           </td>
                           <td
                             className="px-4 py-2.5 text-right tabular-nums font-semibold"
                             style={{ color: "var(--expense)" }}
                           >
-                            {t.type === "expense" ? formatBDT(t.amount) : ""}
+                            {t.type === "expense" ? formatBDT(Number(t.amount)) : ""}
                           </td>
                         </tr>
                       ))}
