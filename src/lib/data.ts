@@ -15,7 +15,7 @@ export const getAccounts = cache(async (): Promise<Account[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("accounts")
-    .select("*")
+    .select("id,user_id,name,type,currency,opening_balance,opening_date,sort_order,archived")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw error;
@@ -31,20 +31,18 @@ export interface TxFilter {
   lean?: boolean;
 }
 
-const FULL_COLS =
-  "id,user_id,account_id,date,type,amount,description,category,note,tags,receipt_path,transfer_group_id,is_transfer,created_at,updated_at";
-const LEAN_COLS =
-  "id,account_id,date,type,amount,description,category,note,tags,is_transfer,created_at";
+/** Columns that exist before features.sql — never crash production. */
+const BASE_LEAN =
+  "id,account_id,date,type,amount,description,category,note,created_at";
+const BASE_FULL =
+  "id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at";
 
-export async function getTransactions(
-  filter: TxFilter = {},
-): Promise<Transaction[]> {
-  const supabase = await createClient();
-  const base = filter.lean
-    ? supabase.from("transactions").select(LEAN_COLS)
-    : supabase.from("transactions").select(FULL_COLS);
-
-  let q = base;
+function applyFilters(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  q: any,
+  filter: TxFilter,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
   if (filter.month) {
     const [y, m] = filter.month.split("-").map(Number);
     const start = `${filter.month}-01`;
@@ -57,72 +55,74 @@ export async function getTransactions(
   if (filter.search) {
     const s = filter.search.replace(/[%_,]/g, " ").trim();
     if (s) {
-      q = q.or(
-        `description.ilike.%${s}%,note.ilike.%${s}%,category.ilike.%${s}%`,
-      );
+      q = q.or(`description.ilike.%${s}%,note.ilike.%${s}%,category.ilike.%${s}%`);
     }
   }
-
   q = q.order("date", { ascending: false }).order("created_at", { ascending: false });
   if (filter.limit) q = q.limit(filter.limit);
+  return q;
+}
 
-  const { data, error } = await q;
+export async function getTransactions(
+  filter: TxFilter = {},
+): Promise<Transaction[]> {
+  const supabase = await createClient();
+
+  // Prefer extended columns when features.sql has been applied.
+  const extended = filter.lean
+    ? "id,account_id,date,type,amount,description,category,note,tags,is_transfer,receipt_path,created_at"
+    : "id,user_id,account_id,date,type,amount,description,category,note,tags,receipt_path,transfer_group_id,is_transfer,created_at,updated_at";
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb: any = supabase;
+  let q = applyFilters(sb.from("transactions").select(extended), filter);
+  let { data, error } = await q;
+
   if (error) {
-    // Graceful fallback before features.sql migration
-    if (
-      error.message.includes("tags") ||
-      error.message.includes("is_transfer") ||
-      error.message.includes("receipt_path") ||
-      error.message.includes("note")
-    ) {
-      const legacy = filter.lean
-        ? "id,account_id,date,type,amount,description,category,created_at"
-        : "id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at";
-      let q2 = supabase.from("transactions").select(legacy);
-      if (filter.month) {
-        const [y, m] = filter.month.split("-").map(Number);
-        const start = `${filter.month}-01`;
-        const end =
-          m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
-        q2 = q2.gte("date", start).lt("date", end);
-      }
-      if (filter.accountId) q2 = q2.eq("account_id", filter.accountId);
-      if (filter.category) q2 = q2.eq("category", filter.category);
-      if (filter.search) q2 = q2.ilike("description", `%${filter.search}%`);
-      q2 = q2.order("date", { ascending: false }).order("created_at", { ascending: false });
-      if (filter.limit) q2 = q2.limit(filter.limit);
-      const res = await q2;
-      if (res.error) throw res.error;
-      return (res.data ?? []) as unknown as Transaction[];
+    // Schema not migrated yet — fall back to base columns.
+    const q2 = applyFilters(
+      sb.from("transactions").select(filter.lean ? BASE_LEAN : BASE_FULL),
+      filter,
+    );
+    const res = await q2;
+    if (res.error && filter.search) {
+      // Last resort: description-only search
+      let q3 = applyFilters(
+        sb.from("transactions").select(filter.lean ? BASE_LEAN : BASE_FULL),
+        { ...filter, search: undefined },
+      );
+      q3 = q3.ilike("description", `%${filter.search}%`);
+      const res3 = await q3;
+      if (res3.error) throw res3.error;
+      return (res3.data ?? []) as unknown as Transaction[];
     }
-    throw error;
+    if (res.error) throw res.error;
+    data = res.data;
   }
+
   return (data ?? []) as unknown as Transaction[];
 }
 
-/** All lean transactions — request-deduped only (cookies cannot go in unstable_cache). */
+/** All lean transactions — request-deduped only. */
 export const getAllTransactions = cache(async (): Promise<Transaction[]> => {
   const supabase = await createClient();
   const pageSize = 1000;
   const out: Transaction[] = [];
-  const cols =
-    "id,account_id,date,type,amount,description,category,is_transfer,created_at";
+  let useExtended = true;
+
   for (let from = 0; ; from += pageSize) {
-    let { data, error } = await supabase
+    const cols = useExtended
+      ? "id,account_id,date,type,amount,description,category,note,is_transfer,created_at"
+      : "id,account_id,date,type,amount,description,category,note,created_at";
+    const { data, error } = await supabase
       .from("transactions")
       .select(cols)
       .order("date", { ascending: true })
       .range(from, from + pageSize - 1);
-    if (error && error.message.includes("is_transfer")) {
-      const res = await supabase
-        .from("transactions")
-        .select("id,account_id,date,type,amount,description,category,created_at")
-        .order("date", { ascending: true })
-        .range(from, from + pageSize - 1);
-      if (res.error) throw res.error;
-      const chunk = (res.data ?? []) as unknown as Transaction[];
-      out.push(...chunk);
-      if (chunk.length < pageSize) break;
+
+    if (error && useExtended) {
+      useExtended = false;
+      from -= pageSize;
       continue;
     }
     if (error) throw error;
@@ -141,16 +141,25 @@ export async function getTransactionsInRange(
   const supabase = await createClient();
   const pageSize = 1000;
   const out: Transaction[] = [];
+  let useExtended = true;
+
   for (let from = 0; ; from += pageSize) {
+    const cols = useExtended
+      ? "id,account_id,date,type,amount,description,category,note,tags,is_transfer,created_at"
+      : BASE_LEAN;
     const { data, error } = await supabase
       .from("transactions")
-      .select(
-        "id,account_id,date,type,amount,description,category,note,tags,is_transfer,created_at",
-      )
+      .select(cols)
       .gte("date", startInclusive)
       .lt("date", endExclusive)
       .order("date", { ascending: true })
       .range(from, from + pageSize - 1);
+
+    if (error && useExtended) {
+      useExtended = false;
+      from -= pageSize;
+      continue;
+    }
     if (error) throw error;
     const chunk = (data ?? []) as unknown as Transaction[];
     out.push(...chunk);
@@ -181,12 +190,20 @@ export async function getTransactionsBefore(beforeDate: string): Promise<Transac
 
 export async function getTransaction(id: string): Promise<Transaction | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("transactions")
     .select("*")
     .eq("id", id)
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    const res = await supabase
+      .from("transactions")
+      .select(BASE_FULL)
+      .eq("id", id)
+      .maybeSingle();
+    if (res.error) throw res.error;
+    data = res.data;
+  }
   return (data as Transaction) ?? null;
 }
 

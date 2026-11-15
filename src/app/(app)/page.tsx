@@ -5,7 +5,6 @@ import { getExcelMonthSummary, getExcelYears } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
 import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
 import { getBudgets, budgetProgress } from "@/lib/budgets";
-import { applyDueRecurring } from "@/lib/recurring";
 import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 import HomeMonthPicker from "@/components/HomeMonthPicker";
 import MonthCompare from "@/components/MonthCompare";
@@ -57,9 +56,6 @@ export default async function DashboardPage({
   const now = new Date();
   const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const ym = sp.m && /^\d{4}-\d{2}$/.test(sp.m) ? sp.m : fallback;
-
-  // Soft-apply recurring rules when visiting home (idempotent)
-  await applyDueRecurring().catch(() => 0);
 
   const prevYm = shiftYm(ym, -1);
   const sheet = getExcelMonthSummary(ym);

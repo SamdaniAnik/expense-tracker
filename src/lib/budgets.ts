@@ -4,16 +4,17 @@ import { toPaisa, fromPaisa } from "@/lib/money";
 import type { Budget, Transaction } from "@/lib/types";
 
 export const getBudgets = cache(async (): Promise<Budget[]> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("budgets")
-    .select("*")
-    .order("category", { ascending: true });
-  if (error) {
-    if (error.message.includes("budgets") || error.code === "42P01") return [];
-    throw error;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("budgets")
+      .select("*")
+      .order("category", { ascending: true });
+    if (error) return [];
+    return (data ?? []) as Budget[];
+  } catch {
+    return [];
   }
-  return (data ?? []) as Budget[];
 });
 
 /** Budgets that apply to a given YYYY-MM. */
@@ -27,10 +28,7 @@ export function budgetsForMonth(budgets: Budget[], ym: string): Budget[] {
   ];
 }
 
-export function spentByCategory(
-  txns: Transaction[],
-  category: string,
-): number {
+export function spentByCategory(txns: Transaction[], category: string): number {
   const key = category.toLowerCase();
   let p = 0;
   for (const t of txns) {

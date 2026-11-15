@@ -3,15 +3,16 @@ import { createClient } from "@/lib/supabase/server";
 import type { Debt } from "@/lib/types";
 
 export const getDebts = cache(async (includeSettled = false): Promise<Debt[]> => {
-  const supabase = await createClient();
-  let q = supabase.from("debts").select("*").order("due_date", { ascending: true });
-  if (!includeSettled) q = q.eq("settled", false);
-  const { data, error } = await q;
-  if (error) {
-    if (error.message.includes("debts") || error.code === "42P01") return [];
-    throw error;
+  try {
+    const supabase = await createClient();
+    let q = supabase.from("debts").select("*").order("due_date", { ascending: true });
+    if (!includeSettled) q = q.eq("settled", false);
+    const { data, error } = await q;
+    if (error) return [];
+    return (data ?? []) as Debt[];
+  } catch {
+    return [];
   }
-  return (data ?? []) as Debt[];
 });
 
 export function debtTotals(debts: Debt[]) {
