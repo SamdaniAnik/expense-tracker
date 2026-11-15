@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import DataTable, { type DataTableColumn } from "@/components/DataTable";
 import { formatBDT } from "@/lib/money";
@@ -32,6 +33,106 @@ function initials(s: string) {
   return (s || "?").trim().charAt(0).toUpperCase();
 }
 
+function MobileLedgerList({
+  rows,
+  beginRows,
+  incomeTotal,
+  expenseTotal,
+  closingOverall,
+}: {
+  rows: LedgerTxnRow[];
+  beginRows: BeginRow[];
+  incomeTotal: number;
+  expenseTotal: number;
+  closingOverall: number;
+}) {
+  return (
+    <div>
+      {beginRows.length > 0 ? (
+        <div className="card mb-3 divide-y divide-[var(--border)] overflow-hidden">
+          {beginRows.map((b) => (
+            <div key={b.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">Beginning Balance</p>
+                <p className="truncate text-xs text-[var(--muted)]">
+                  {b.dateLabel} · {b.account}
+                </p>
+              </div>
+              <p className="shrink-0 text-sm font-bold tabular-nums">{formatBDT(b.balance)}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {rows.length === 0 ? (
+        <div className="card p-6 text-center text-sm text-[var(--muted)]">No ledger rows.</div>
+      ) : (
+        <div className="card divide-y divide-[var(--border)] overflow-hidden">
+          {rows.map((r) => {
+            const income = r.type === "income";
+            return (
+              <Link
+                key={r.id}
+                href={`/transactions/${r.id}/edit`}
+                className="flex items-center gap-3 px-3.5 py-3 transition-colors active:bg-[var(--surface-2)]"
+              >
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
+                  style={{
+                    background: income ? "var(--income-soft)" : "var(--expense-soft)",
+                    color: income ? "var(--income)" : "var(--expense)",
+                  }}
+                >
+                  {initials(r.description || r.category || "?")}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{r.description || "—"}</p>
+                  <p className="truncate text-xs text-[var(--muted)]">
+                    {r.account}
+                    {r.category ? ` · ${r.category}` : ""}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p
+                    className="whitespace-nowrap text-sm font-bold tabular-nums"
+                    style={{ color: income ? "var(--income)" : "var(--expense)" }}
+                  >
+                    {income ? "+" : "−"}
+                    {formatBDT(r.amount)}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">{formatDay(r.date)}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="card mt-3 space-y-2 p-3.5 text-sm">
+        <div className="flex justify-between gap-2">
+          <span className="text-[var(--muted)]">Income</span>
+          <span className="font-bold tabular-nums" style={{ color: "var(--income)" }}>
+            {formatBDT(incomeTotal)}
+          </span>
+        </div>
+        <div className="flex justify-between gap-2">
+          <span className="text-[var(--muted)]">Expense</span>
+          <span className="font-bold tabular-nums" style={{ color: "var(--expense)" }}>
+            {formatBDT(expenseTotal)}
+          </span>
+        </div>
+        <div className="flex justify-between gap-2 border-t border-[var(--border)] pt-2">
+          <span className="font-semibold" style={{ color: "var(--gold)" }}>
+            Closing
+          </span>
+          <span className="font-extrabold tabular-nums">{formatBDT(closingOverall)}</span>
+        </div>
+        <p className="text-xs text-[var(--muted)]">{rows.length} entries · tap a row to edit</p>
+      </div>
+    </div>
+  );
+}
+
 export default function MonthLedgerTable({
   rows,
   beginRows,
@@ -47,6 +148,17 @@ export default function MonthLedgerTable({
   startingOverall: number;
   closingOverall: number;
 }) {
+  // Default to mobile list; only switch to Excel table on wide screens.
+  const [desktop, setDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setDesktop(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   const columns: DataTableColumn<LedgerTxnRow>[] = [
     {
       id: "date",
@@ -188,112 +300,34 @@ export default function MonthLedgerTable({
     </>
   );
 
+  if (!desktop) {
+    return (
+      <MobileLedgerList
+        rows={rows}
+        beginRows={beginRows}
+        incomeTotal={incomeTotal}
+        expenseTotal={expenseTotal}
+        closingOverall={closingOverall}
+      />
+    );
+  }
+
   return (
-    <>
-      {/* Phone: stacked list — no 44rem Excel table */}
-      <div className="lg:hidden">
-        {beginRows.length > 0 ? (
-          <div className="card mb-3 divide-y divide-[var(--border)] overflow-hidden">
-            {beginRows.map((b) => (
-              <div key={b.id} className="flex items-center justify-between gap-3 px-3.5 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">Beginning Balance</p>
-                  <p className="truncate text-xs text-[var(--muted)]">
-                    {b.dateLabel} · {b.account}
-                  </p>
-                </div>
-                <p className="shrink-0 text-sm font-bold tabular-nums">{formatBDT(b.balance)}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        {rows.length === 0 ? (
-          <div className="card p-6 text-center text-sm text-[var(--muted)]">No ledger rows.</div>
-        ) : (
-          <div className="card divide-y divide-[var(--border)] overflow-hidden">
-            {rows.map((r) => {
-              const income = r.type === "income";
-              return (
-                <Link
-                  key={r.id}
-                  href={`/transactions/${r.id}/edit`}
-                  className="flex items-center gap-3 px-3.5 py-3 transition-colors active:bg-[var(--surface-2)]"
-                >
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
-                    style={{
-                      background: income ? "var(--income-soft)" : "var(--expense-soft)",
-                      color: income ? "var(--income)" : "var(--expense)",
-                    }}
-                  >
-                    {initials(r.description || r.category || "?")}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{r.description || "—"}</p>
-                    <p className="truncate text-xs text-[var(--muted)]">
-                      {r.account}
-                      {r.category ? ` · ${r.category}` : ""}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p
-                      className="whitespace-nowrap text-sm font-bold tabular-nums"
-                      style={{ color: income ? "var(--income)" : "var(--expense)" }}
-                    >
-                      {income ? "+" : "−"}
-                      {formatBDT(r.amount)}
-                    </p>
-                    <p className="text-xs text-[var(--muted)]">{formatDay(r.date)}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="card mt-3 space-y-2 p-3.5 text-sm">
-          <div className="flex justify-between gap-2">
-            <span className="text-[var(--muted)]">Income</span>
-            <span className="font-bold tabular-nums" style={{ color: "var(--income)" }}>
-              {formatBDT(incomeTotal)}
-            </span>
-          </div>
-          <div className="flex justify-between gap-2">
-            <span className="text-[var(--muted)]">Expense</span>
-            <span className="font-bold tabular-nums" style={{ color: "var(--expense)" }}>
-              {formatBDT(expenseTotal)}
-            </span>
-          </div>
-          <div className="flex justify-between gap-2 border-t border-[var(--border)] pt-2">
-            <span className="font-semibold" style={{ color: "var(--gold)" }}>
-              Closing
-            </span>
-            <span className="font-extrabold tabular-nums">{formatBDT(closingOverall)}</span>
-          </div>
-          <p className="text-xs text-[var(--muted)]">{rows.length} entries · tap a row to edit</p>
-        </div>
-      </div>
-
-      {/* Desktop: Excel-style searchable table */}
-      <div className="hidden lg:block">
-        <DataTable
-          rows={rows}
-          columns={columns}
-          getRowId={(r) => r.id}
-          searchPlaceholder="Search date, description, account…"
-          empty="No ledger rows match your search."
-          pageSize={50}
-          pinnedRows={pinned}
-          footer={footer}
-          minWidth="44rem"
-          toolbarExtra={
-            <span className="text-xs font-semibold text-[var(--muted)]">
-              {rows.length} entries
-            </span>
-          }
-        />
-      </div>
-    </>
+    <DataTable
+      rows={rows}
+      columns={columns}
+      getRowId={(r) => r.id}
+      searchPlaceholder="Search date, description, account…"
+      empty="No ledger rows match your search."
+      pageSize={50}
+      pinnedRows={pinned}
+      footer={footer}
+      minWidth="44rem"
+      toolbarExtra={
+        <span className="text-xs font-semibold text-[var(--muted)]">
+          {rows.length} entries
+        </span>
+      }
+    />
   );
 }

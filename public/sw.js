@@ -1,5 +1,5 @@
 // Minimal offline shell for Ledger.
-const CACHE = "ledger-v1";
+const CACHE = "ledger-v2";
 const APP_SHELL = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {
@@ -28,6 +28,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Always network for Next.js bundles / CSS so deploys show up on phones.
+  if (url.origin === self.location.origin && url.pathname.startsWith("/_next/")) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
   // Navigations: network first, fall back to cache.
   if (req.mode === "navigate") {
     event.respondWith(
@@ -42,18 +48,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache first.
+  // Other same-origin static assets: network first.
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(req).then(
-        (cached) =>
-          cached ||
-          fetch(req).then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-            return res;
-          }),
-      ),
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req)),
     );
   }
 });
