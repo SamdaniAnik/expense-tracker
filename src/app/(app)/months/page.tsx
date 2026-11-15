@@ -6,6 +6,7 @@ import { getExcelMonthSummary } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
 import { StatTile, Empty } from "@/components/ui";
 import MonthJump from "@/components/MonthJump";
+import MonthLedgerTable from "@/components/MonthLedgerTable";
 import type { Transaction } from "@/lib/types";
 
 function shiftMonth(ym: string, delta: number) {
@@ -84,8 +85,8 @@ export default async function MonthsPage({
           ‹
         </Link>
         <div className="text-center">
-          <h1 className="text-lg font-bold">{label}</h1>
-          <p className="text-xs text-[var(--muted)]">Month ledger</p>
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">{label}</h1>
+          <p className="text-xs text-[var(--muted)]">Excel-style ledger · search &amp; sort</p>
         </div>
         <Link href={`/months?m=${shiftMonth(month, 1)}`} className="btn btn-ghost px-3" aria-label="Next month">
           ›
@@ -147,124 +148,30 @@ export default async function MonthsPage({
           .
         </Empty>
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[44rem] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
-                  <th className="px-3 py-2.5 font-semibold">Date</th>
-                  <th className="px-3 py-2.5 font-semibold">Description</th>
-                  <th className="px-3 py-2.5 font-semibold">Account</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Income</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Expense</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
-                    Overall Balance
-                    <div className="font-normal normal-case tracking-normal text-[0.65rem]">
-                      start of month
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {beginRows.map(({ account, balance }) => (
-                  <tr
-                    key={`begin-${account.id}`}
-                    className="border-b border-[var(--border)] bg-[var(--surface-2)]/50"
-                  >
-                    <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-[var(--muted)]">
-                      {new Date(monthStart + "T00:00:00").toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </td>
-                    <td className="px-3 py-2.5 font-medium">Beginning Balance</td>
-                    <td className="whitespace-nowrap px-3 py-2.5">{account.name}</td>
-                    <td className="px-3 py-2.5" />
-                    <td className="px-3 py-2.5" />
-                    <td className="px-3 py-2.5 text-right tabular-nums font-semibold">
-                      {formatBDT(balance)}
-                    </td>
-                  </tr>
-                ))}
-
-                {txns.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)]/60"
-                  >
-                    <td className="whitespace-nowrap px-3 py-2.5 tabular-nums text-[var(--muted)]">
-                      <Link href={`/transactions/${t.id}/edit`} className="hover:text-[var(--primary)]">
-                        {new Date(t.date + "T00:00:00").toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <Link href={`/transactions/${t.id}/edit`} className="font-medium hover:text-[var(--primary)]">
-                        {t.description || "—"}
-                      </Link>
-                      {t.category ? (
-                        <div className="text-xs text-[var(--muted)]">{t.category}</div>
-                      ) : null}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-[var(--muted)]">
-                      {accountName.get(t.account_id) ?? "—"}
-                    </td>
-                    <td
-                      className="px-3 py-2.5 text-right tabular-nums font-semibold"
-                      style={{ color: "var(--income)" }}
-                    >
-                      {t.type === "income" ? formatBDT(t.amount) : ""}
-                    </td>
-                    <td
-                      className="px-3 py-2.5 text-right tabular-nums font-semibold"
-                      style={{ color: "var(--expense)" }}
-                    >
-                      {t.type === "expense" ? formatBDT(t.amount) : ""}
-                    </td>
-                    {/* Excel leaves this blank on day-to-day rows */}
-                    <td className="px-3 py-2.5" />
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                {/* Excel summary row: Income | Expense | Overall Balance (starting) */}
-                <tr className="border-t border-[var(--border)] bg-[var(--surface-2)] text-sm font-bold">
-                  <td className="px-3 py-2.5" colSpan={3}>
-                    Month totals
-                  </td>
-                  <td
-                    className="px-3 py-2.5 text-right tabular-nums"
-                    style={{ background: "#ecfdf5", color: "#047857" }}
-                  >
-                    {formatBDT(fromPaisa(incomeP))}
-                  </td>
-                  <td
-                    className="px-3 py-2.5 text-right tabular-nums"
-                    style={{ background: "#fff1f2", color: "#be123c" }}
-                  >
-                    {formatBDT(fromPaisa(expenseP))}
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">
-                    {formatBDT(startingOverall)}
-                    <div className="text-[0.65rem] font-normal text-[var(--muted)]">
-                      start of month
-                    </div>
-                  </td>
-                </tr>
-                <tr className="text-sm font-bold" style={{ background: "#fef08a" }}>
-                  <td className="px-3 py-2.5" colSpan={5} style={{ color: "#854d0e" }}>
-                    Closing overall (yellow)
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "#121826" }}>
-                    {formatBDT(closingOverall)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
+        <MonthLedgerTable
+          rows={txns.map((t) => ({
+            id: t.id,
+            date: t.date,
+            description: t.description || "",
+            category: t.category,
+            account: accountName.get(t.account_id) ?? "—",
+            type: t.type,
+            amount: Number(t.amount),
+          }))}
+          beginRows={beginRows.map(({ account, balance }) => ({
+            id: `begin-${account.id}`,
+            dateLabel: new Date(monthStart + "T00:00:00").toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+            }),
+            account: account.name,
+            balance,
+          }))}
+          incomeTotal={fromPaisa(incomeP)}
+          expenseTotal={fromPaisa(expenseP)}
+          startingOverall={startingOverall}
+          closingOverall={closingOverall}
+        />
       )}
     </div>
   );

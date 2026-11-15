@@ -3,6 +3,7 @@ import { getAccounts, getTransactionsInRange } from "@/lib/data";
 import { toPaisa, fromPaisa, formatBDT } from "@/lib/money";
 import { Empty, SectionTitle, StatTile } from "@/components/ui";
 import { BalanceLine, IncomeExpenseBars, CategoryBars } from "@/components/charts/Charts";
+import { AccountFlowTable, NamedValueTable } from "@/components/SimpleDataTable";
 import type { Transaction } from "@/lib/types";
 import { getExcelBalanceSeries, getExcelYears } from "@/lib/month-summaries";
 
@@ -229,62 +230,20 @@ export default async function InsightsPage({
         </div>
         <div>
           <SectionTitle>By account · {year}</SectionTitle>
-          <div className="card overflow-hidden">
-            {byAccount.length === 0 ? (
-              <Empty>No account activity.</Empty>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase text-[var(--muted)]">
-                    <th className="px-3 py-2.5">Account</th>
-                    <th className="px-3 py-2.5 text-right">In</th>
-                    <th className="px-3 py-2.5 text-right">Out</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {byAccount.map((r) => (
-                    <tr key={r.name} className="border-b border-[var(--border)] last:border-0">
-                      <td className="px-3 py-2.5 font-medium">{r.name}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--income)" }}>
-                        {formatBDT(r.income)}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--expense)" }}>
-                        {formatBDT(r.expense)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          {byAccount.length === 0 ? (
+            <Empty>No account activity.</Empty>
+          ) : (
+            <AccountFlowTable rows={byAccount} />
+          )}
         </div>
       </div>
 
       <SectionTitle>Largest expenses · {year}</SectionTitle>
-      <div className="card overflow-hidden">
-        {topDesc.length === 0 ? (
-          <Empty>No expenses.</Empty>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase text-[var(--muted)]">
-                <th className="px-3 py-2.5">Description</th>
-                <th className="px-3 py-2.5 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topDesc.map((r) => (
-                <tr key={r.name} className="border-b border-[var(--border)] last:border-0">
-                  <td className="px-3 py-2.5 font-medium">{r.name}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums font-semibold" style={{ color: "var(--expense)" }}>
-                    {formatBDT(r.value)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {topDesc.length === 0 ? (
+        <Empty>No expenses.</Empty>
+      ) : (
+        <NamedValueTable rows={topDesc} valueLabel="Total" tone="expense" />
+      )}
 
       <p className="mt-4 text-xs text-[var(--muted)]">
         Year-scoped query ({yearTxns.length.toLocaleString()} rows).{" "}

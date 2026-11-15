@@ -10,7 +10,7 @@ import {
 import { formatBDT } from "@/lib/money";
 import { Empty } from "@/components/ui";
 import GiftAddForm from "@/components/GiftAddForm";
-import { deleteGift } from "../actions";
+import GiftTable from "@/components/GiftTable";
 
 function isList(v: string): v is GiftList {
   return v === "biyer" || v === "babur";
@@ -112,59 +112,16 @@ export default async function GiftListPage({
               <code className="text-xs">npm run seed:google</code> after creating the table.
             </Empty>
           ) : (
-            <div className="card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[28rem] border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
-                      <th className="px-3 py-2.5 font-semibold">#</th>
-                      <th className="px-3 py-2.5 font-semibold">Name</th>
-                      <th className="px-3 py-2.5 text-right font-semibold">Amount</th>
-                      <th className="px-3 py-2.5 font-semibold">Item</th>
-                      <th className="px-3 py-2.5" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {gifts.map((g, i) => (
-                      <tr key={g.id} className="border-b border-[var(--border)] last:border-0">
-                        <td className="px-3 py-2.5 tabular-nums text-[var(--muted)]">{i + 1}</td>
-                        <td className="px-3 py-2.5 font-medium">{g.name}</td>
-                        <td
-                          className="px-3 py-2.5 text-right tabular-nums font-semibold"
-                          style={{ color: "var(--income)" }}
-                        >
-                          {g.amount != null ? formatBDT(Number(g.amount)) : ""}
-                        </td>
-                        <td className="px-3 py-2.5 text-[var(--muted)]">{g.item || ""}</td>
-                        <td className="px-3 py-2.5 text-right">
-                          <form action={deleteGift}>
-                            <input type="hidden" name="id" value={g.id} />
-                            <input type="hidden" name="list" value={list} />
-                            <button
-                              type="submit"
-                              className="text-xs font-semibold text-[var(--expense)]"
-                            >
-                              Delete
-                            </button>
-                          </form>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-[var(--surface-2)] text-sm font-bold">
-                      <td className="px-3 py-2.5" colSpan={2}>
-                        Cash total
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--income)" }}>
-                        {formatBDT(cash)}
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
+            <GiftTable
+              list={list}
+              cashTotal={cash}
+              rows={gifts.map((g) => ({
+                id: g.id,
+                name: g.name,
+                amount: g.amount != null ? Number(g.amount) : null,
+                item: g.item,
+              }))}
+            />
           )}
         </div>
       </div>
