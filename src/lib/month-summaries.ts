@@ -34,3 +34,10 @@ export function getExcelYears(): number[] {
   years.add(nowY);
   return [...years].sort((a, b) => b - a);
 }
+
+/** Closing balances from Excel summaries (chronological). */
+export function getExcelBalanceSeries(limit = 24): { ym: string; closing: number }[] {
+  const keys = Object.keys(MAP).sort();
+  const slice = keys.slice(-limit);
+  return slice.map((ym) => ({ ym, closing: MAP[ym].closing }));
+}

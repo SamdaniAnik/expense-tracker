@@ -1,5 +1,4 @@
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Transaction } from "./types";
 
@@ -29,7 +28,6 @@ export interface TxFilter {
   category?: string;
   search?: string;
   limit?: number;
-  /** When true, only columns needed for lists/balances. */
   lean?: boolean;
 }
 
@@ -41,7 +39,6 @@ export async function getTransactions(
   filter: TxFilter = {},
 ): Promise<Transaction[]> {
   const supabase = await createClient();
-  // Avoid dynamic select strings — supabase-js types them as parse errors.
   const base = filter.lean
     ? supabase.from("transactions").select(LEAN_COLS)
     : supabase.from("transactions").select(FULL_COLS);
@@ -66,7 +63,8 @@ export async function getTransactions(
   return (data ?? []) as unknown as Transaction[];
 }
 
-async function fetchAllTransactions(): Promise<Transaction[]> {
+/** All lean transactions — request-deduped only (cookies cannot go in unstable_cache). */
+export const getAllTransactions = cache(async (): Promise<Transaction[]> => {
   const supabase = await createClient();
   const pageSize = 1000;
   const out: Transaction[] = [];
@@ -77,28 +75,38 @@ async function fetchAllTransactions(): Promise<Transaction[]> {
       .order("date", { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw error;
-    const chunk = (data ?? []) as Transaction[];
+    const chunk = (data ?? []) as unknown as Transaction[];
+    out.push(...chunk);
+    if (chunk.length < pageSize) break;
+  }
+  return out;
+});
+
+/** Transactions with date in [start, endExclusive). */
+export async function getTransactionsInRange(
+  startInclusive: string,
+  endExclusive: string,
+): Promise<Transaction[]> {
+  const supabase = await createClient();
+  const pageSize = 1000;
+  const out: Transaction[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(LEAN_COLS)
+      .gte("date", startInclusive)
+      .lt("date", endExclusive)
+      .order("date", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as unknown as Transaction[];
     out.push(...chunk);
     if (chunk.length < pageSize) break;
   }
   return out;
 }
 
-/**
- * All transactions (lean columns), cached ~2 min per user.
- * Home/months should prefer month-scoped queries when possible.
- */
-export async function getAllTransactions(): Promise<Transaction[]> {
-  const user = await getUser();
-  const userId = user?.id ?? "anon";
-  return unstable_cache(
-    () => fetchAllTransactions(),
-    [`all-txns-v2`, userId],
-    { revalidate: 120, tags: [`txns-${userId}`] },
-  )();
-}
-
-/** Transactions strictly before a date (for opening-balance reconstruction). */
+/** Transactions strictly before a date. */
 export async function getTransactionsBefore(beforeDate: string): Promise<Transaction[]> {
   const supabase = await createClient();
   const pageSize = 1000;
@@ -111,7 +119,7 @@ export async function getTransactionsBefore(beforeDate: string): Promise<Transac
       .order("date", { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw error;
-    const chunk = (data ?? []) as Transaction[];
+    const chunk = (data ?? []) as unknown as Transaction[];
     out.push(...chunk);
     if (chunk.length < pageSize) break;
   }

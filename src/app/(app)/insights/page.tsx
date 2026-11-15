@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { getAccounts, getAllTransactions } from "@/lib/data";
+import { getAccounts, getTransactionsInRange } from "@/lib/data";
 import { toPaisa, fromPaisa, formatBDT } from "@/lib/money";
 import { Empty, SectionTitle, StatTile } from "@/components/ui";
 import { BalanceLine, IncomeExpenseBars, CategoryBars } from "@/components/charts/Charts";
 import type { Transaction } from "@/lib/types";
-import { getExcelYears } from "@/lib/month-summaries";
+import { getExcelBalanceSeries, getExcelYears } from "@/lib/month-summaries";
 
 function monthKey(date: string) {
   return date.slice(0, 7);
@@ -16,6 +16,17 @@ function shortMonth(ym: string) {
   });
 }
 
+function sumYear(txns: Transaction[]) {
+  let incomeP = 0;
+  let expenseP = 0;
+  for (const t of txns) {
+    const p = toPaisa(t.amount);
+    if (t.type === "income") incomeP += p;
+    else expenseP += p;
+  }
+  return { incomeP, expenseP };
+}
+
 export default async function InsightsPage({
   searchParams,
 }: {
@@ -25,10 +36,15 @@ export default async function InsightsPage({
   const years = getExcelYears();
   const year =
     sp.y && /^\d{4}$/.test(sp.y) ? sp.y : String(years[0] ?? new Date().getFullYear());
+  const prevYear = String(Number(year) - 1);
 
-  const [accounts, txns] = await Promise.all([getAccounts(), getAllTransactions()]);
+  const [accounts, yearTxns, prevTxns] = await Promise.all([
+    getAccounts(),
+    getTransactionsInRange(`${year}-01-01`, `${Number(year) + 1}-01-01`),
+    getTransactionsInRange(`${prevYear}-01-01`, `${year}-01-01`),
+  ]);
 
-  if (txns.length === 0) {
+  if (yearTxns.length === 0 && prevTxns.length === 0) {
     return (
       <div>
         <h1 className="mb-4 text-xl font-bold">Reports</h1>
@@ -37,11 +53,6 @@ export default async function InsightsPage({
     );
   }
 
-  const yearTxns = (txns as Transaction[]).filter((t) => t.date.startsWith(year));
-  const prevYear = String(Number(year) - 1);
-  const prevTxns = (txns as Transaction[]).filter((t) => t.date.startsWith(prevYear));
-
-  const byMonthAll = new Map<string, { income: number; expense: number }>();
   const byMonth = new Map<string, { income: number; expense: number }>();
   const catP = new Map<string, number>();
   const acctExp = new Map<string, number>();
@@ -54,17 +65,13 @@ export default async function InsightsPage({
   for (const t of yearTxns) {
     const k = monthKey(t.date);
     const p = toPaisa(t.amount);
-    const all = byMonthAll.get(k) ?? { income: 0, expense: 0 };
     if (t.type === "income") {
-      all.income += p;
       yearIncomeP += p;
       acctInc.set(t.account_id, (acctInc.get(t.account_id) ?? 0) + p);
     } else {
-      all.expense += p;
       yearExpenseP += p;
       acctExp.set(t.account_id, (acctExp.get(t.account_id) ?? 0) + p);
     }
-    byMonthAll.set(k, all);
 
     if (t.category === "Adjustment") continue;
     const cur = byMonth.get(k) ?? { income: 0, expense: 0 };
@@ -79,13 +86,7 @@ export default async function InsightsPage({
     byMonth.set(k, cur);
   }
 
-  let prevIncomeP = 0;
-  let prevExpenseP = 0;
-  for (const t of prevTxns) {
-    const p = toPaisa(t.amount);
-    if (t.type === "income") prevIncomeP += p;
-    else prevExpenseP += p;
-  }
+  const { incomeP: prevIncomeP, expenseP: prevExpenseP } = sumYear(prevTxns);
 
   const monthsReal = [...byMonth.keys()].sort();
   const ie = monthsReal.map((m) => {
@@ -97,24 +98,10 @@ export default async function InsightsPage({
     };
   });
 
-  const openingP = accounts.reduce((acc, a) => acc + toPaisa(a.opening_balance), 0);
-  // Running balance across all history for the line chart (last 24 months)
-  const byMonthAllLife = new Map<string, { income: number; expense: number }>();
-  for (const t of txns as Transaction[]) {
-    const k = monthKey(t.date);
-    const p = toPaisa(t.amount);
-    const all = byMonthAllLife.get(k) ?? { income: 0, expense: 0 };
-    if (t.type === "income") all.income += p;
-    else all.expense += p;
-    byMonthAllLife.set(k, all);
-  }
-  const monthsAll = [...byMonthAllLife.keys()].sort();
-  let running = openingP;
-  const balance = monthsAll.slice(-24).map((m) => {
-    const v = byMonthAllLife.get(m)!;
-    running += v.income - v.expense;
-    return { month: shortMonth(m), balance: fromPaisa(running) };
-  });
+  const balance = getExcelBalanceSeries(24).map((r) => ({
+    month: shortMonth(r.ym),
+    balance: r.closing,
+  }));
 
   const cats = [...catP.entries()]
     .map(([name, p]) => ({ name, value: fromPaisa(p) }))
@@ -211,9 +198,13 @@ export default async function InsightsPage({
         </div>
       </div>
 
-      <SectionTitle>Balance over time (24 mo)</SectionTitle>
+      <SectionTitle>Balance over time (Excel)</SectionTitle>
       <div className="card p-2">
-        <BalanceLine data={balance} />
+        {balance.length === 0 ? (
+          <Empty>No balance history.</Empty>
+        ) : (
+          <BalanceLine data={balance} />
+        )}
       </div>
 
       <SectionTitle>Income vs expense · {year}</SectionTitle>
@@ -296,7 +287,7 @@ export default async function InsightsPage({
       </div>
 
       <p className="mt-4 text-xs text-[var(--muted)]">
-        Loaded {txns.length.toLocaleString()} rows from Supabase (cached).{" "}
+        Year-scoped query ({yearTxns.length.toLocaleString()} rows).{" "}
         <Link href={`/months`} className="font-semibold text-[var(--primary)]">
           Open month ledger
         </Link>
