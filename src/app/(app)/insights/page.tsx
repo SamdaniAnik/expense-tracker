@@ -26,13 +26,22 @@ export default async function InsightsPage() {
     );
   }
 
-  // --- monthly income/expense + net ---
+  // byMonthAll includes reconciliation rows (keeps the balance line accurate);
+  // byMonth / categories exclude the "Adjustment" category so the bars and
+  // category breakdown reflect real activity.
+  const byMonthAll = new Map<string, { income: number; expense: number }>();
   const byMonth = new Map<string, { income: number; expense: number }>();
   const catP = new Map<string, number>();
   for (const t of txns as Transaction[]) {
     const k = monthKey(t.date);
-    const cur = byMonth.get(k) ?? { income: 0, expense: 0 };
     const p = toPaisa(t.amount);
+    const all = byMonthAll.get(k) ?? { income: 0, expense: 0 };
+    if (t.type === "income") all.income += p;
+    else all.expense += p;
+    byMonthAll.set(k, all);
+
+    if (t.category === "Adjustment") continue;
+    const cur = byMonth.get(k) ?? { income: 0, expense: 0 };
     if (t.type === "income") cur.income += p;
     else {
       cur.expense += p;
@@ -42,17 +51,18 @@ export default async function InsightsPage() {
     byMonth.set(k, cur);
   }
 
-  const monthsSorted = [...byMonth.keys()].sort();
-  const ieFull = monthsSorted.map((m) => {
+  const monthsReal = [...byMonth.keys()].sort();
+  const ieFull = monthsReal.map((m) => {
     const v = byMonth.get(m)!;
     return { key: m, income: fromPaisa(v.income), expense: fromPaisa(v.expense) };
   });
 
-  // cumulative balance over time
+  // cumulative balance over time (includes reconciliation rows)
+  const monthsAll = [...byMonthAll.keys()].sort();
   const openingP = accounts.reduce((acc, a) => acc + toPaisa(a.opening_balance), 0);
   let running = openingP;
-  const balanceFull = monthsSorted.map((m) => {
-    const v = byMonth.get(m)!;
+  const balanceFull = monthsAll.map((m) => {
+    const v = byMonthAll.get(m)!;
     running += v.income - v.expense;
     return { key: m, balance: fromPaisa(running) };
   });
