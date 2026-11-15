@@ -52,7 +52,7 @@ export default function SideNav({ isAdmin = false }: { isAdmin?: boolean }) {
     : more;
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-3.5 py-5 backdrop-blur lg:flex">
+    <aside className="shell-side-nav sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-3.5 py-5 backdrop-blur lg:flex">
       <div className="mb-8 flex items-center gap-3 px-1.5">
         <span
           className="flex h-10 w-10 items-center justify-center rounded-2xl text-xl font-extrabold text-white"

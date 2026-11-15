@@ -1,10 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isMobileUserAgent } from "@/lib/device";
 
 const PUBLIC_PATHS = ["/login", "/auth", "/privacy"];
 
+function withDeviceHeader(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  const shell = isMobileUserAgent(request.headers.get("user-agent")) ? "mobile" : "desktop";
+  requestHeaders.set("x-device-shell", shell);
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+}
+
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  let response = withDeviceHeader(request);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +26,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = withDeviceHeader(request);
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

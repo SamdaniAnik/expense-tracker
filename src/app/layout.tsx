@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Plus_Jakarta_Sans, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import NativeShell from "@/components/NativeShell";
+import DeviceShell from "@/components/DeviceShell";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-geist-sans",
@@ -43,14 +45,19 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const h = await headers();
+  const shell = h.get("x-device-shell") === "mobile" ? "mobile" : "desktop";
+
   return (
     <html
       lang="en"
+      data-shell={shell}
       className={`${jakarta.variable} ${bricolage.variable} ${geistMono.variable} antialiased`}
     >
       <body className="min-h-full">
         {children}
+        <DeviceShell initial={shell} />
         <NativeShell />
         <ServiceWorkerRegister />
       </body>
