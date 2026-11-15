@@ -1,0 +1,112 @@
+import { getAccounts, getAllTransactions } from "@/lib/data";
+import { accountBalance } from "@/lib/balances";
+import { formatBDT } from "@/lib/money";
+import { ACCOUNT_TYPE_LABEL, type Account } from "@/lib/types";
+import { createAccount, updateAccount, setArchived } from "./actions";
+import SignOutButton from "@/components/SignOutButton";
+import { SectionTitle } from "@/components/ui";
+
+const TYPES = ["bank", "mobile", "cash"] as const;
+
+export default async function AccountsPage() {
+  const [accounts, txns] = await Promise.all([getAccounts(), getAllTransactions()]);
+  const active = accounts.filter((a) => !a.archived);
+  const archived = accounts.filter((a) => a.archived);
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div>
+      <h1 className="mb-3 text-xl font-bold">Accounts</h1>
+
+      <div className="space-y-2.5">
+        {active.map((a) => (
+          <AccountItem key={a.id} account={a} balance={accountBalance(a, txns)} />
+        ))}
+      </div>
+
+      <details className="card mt-3 p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-[var(--primary)]">
+          ＋ Add account
+        </summary>
+        <form action={createAccount} className="mt-3 space-y-3">
+          <input name="name" placeholder="Account name" className="input" required />
+          <div className="grid grid-cols-2 gap-2">
+            <select name="type" className="input" defaultValue="bank">
+              {TYPES.map((t) => (
+                <option key={t} value={t}>{ACCOUNT_TYPE_LABEL[t]}</option>
+              ))}
+            </select>
+            <input name="opening_date" type="date" defaultValue={today} className="input" />
+          </div>
+          <input name="opening_balance" inputMode="decimal" placeholder="Opening balance (৳)" className="input" />
+          <button className="btn btn-primary w-full">Add account</button>
+        </form>
+      </details>
+
+      {archived.length > 0 && (
+        <>
+          <SectionTitle>Archived</SectionTitle>
+          <div className="space-y-2.5">
+            {archived.map((a) => (
+              <div key={a.id} className="card flex items-center justify-between p-4 opacity-70">
+                <span className="text-sm font-semibold">{a.name}</span>
+                <form action={setArchived}>
+                  <input type="hidden" name="id" value={a.id} />
+                  <input type="hidden" name="archived" value="false" />
+                  <button className="text-xs font-semibold text-[var(--primary)]">Restore</button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <SectionTitle>Session</SectionTitle>
+      <SignOutButton />
+      <p className="mt-6 text-center text-xs text-[var(--muted)]">Paisa · your private money tracker</p>
+    </div>
+  );
+}
+
+function AccountItem({ account, balance }: { account: Account; balance: number }) {
+  return (
+    <details className="card overflow-hidden">
+      <summary className="flex cursor-pointer items-center justify-between p-4">
+        <div>
+          <div className="text-sm font-semibold">{account.name}</div>
+          <div className="text-xs text-[var(--muted)]">{ACCOUNT_TYPE_LABEL[account.type]}</div>
+        </div>
+        <div className="text-base font-bold tabular-nums" style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}>
+          {formatBDT(balance)}
+        </div>
+      </summary>
+      <form action={updateAccount} className="space-y-3 border-t border-[var(--border)] p-4">
+        <input type="hidden" name="id" value={account.id} />
+        <input name="name" defaultValue={account.name} className="input" required />
+        <div className="grid grid-cols-2 gap-2">
+          <select name="type" className="input" defaultValue={account.type}>
+            {TYPES.map((t) => (
+              <option key={t} value={t}>{ACCOUNT_TYPE_LABEL[t]}</option>
+            ))}
+          </select>
+          <input name="opening_date" type="date" defaultValue={account.opening_date} className="input" />
+        </div>
+        <div>
+          <label className="label">Opening balance (৳)</label>
+          <input name="opening_balance" inputMode="decimal" defaultValue={String(account.opening_balance)} className="input" />
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-primary flex-1">Save</button>
+          <button
+            formAction={setArchived}
+            name="archived"
+            value="true"
+            className="btn btn-ghost"
+          >
+            Archive
+          </button>
+        </div>
+      </form>
+    </details>
+  );
+}
