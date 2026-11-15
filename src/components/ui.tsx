@@ -17,10 +17,21 @@ export function StatTile({
       : tone === "expense"
         ? "var(--expense)"
         : "var(--text)";
+  const accent =
+    tone === "income"
+      ? "var(--income)"
+      : tone === "expense"
+        ? "var(--expense)"
+        : "var(--primary)";
   return (
-    <div className="card p-3.5">
-      <div className="text-xs font-medium text-[var(--muted)]">{label}</div>
-      <div className="mt-1 text-lg font-bold tabular-nums" style={{ color }}>
+    <div className="card card-hover relative overflow-hidden p-3.5 pl-4">
+      <span
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ background: accent }}
+        aria-hidden
+      />
+      <div className="text-xs font-semibold text-[var(--muted)]">{label}</div>
+      <div className="mt-1 text-lg font-extrabold tabular-nums" style={{ color }}>
         {formatBDT(value)}
       </div>
     </div>
@@ -66,15 +77,17 @@ export function AccountCard({
   balance: number;
 }) {
   return (
-    <div className="card min-w-[9.5rem] flex-1 p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <span>{typeEmoji[account.type]}</span>
-        <span className="truncate">{account.name}</span>
+    <div className="card card-hover min-w-[9.5rem] flex-1 p-4">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-base ring-1 ring-[var(--border)]">
+          {typeEmoji[account.type]}
+        </span>
+        <span className="truncate text-sm font-bold">{account.name}</span>
       </div>
-      <div className="mt-2 text-xl font-bold tabular-nums" style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}>
+      <div className="mt-3 text-xl font-extrabold tabular-nums" style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}>
         {formatBDT(balance)}
       </div>
-      <div className="text-xs text-[var(--muted)]">{ACCOUNT_TYPE_LABEL[account.type]}</div>
+      <div className="mt-0.5 text-xs font-medium text-[var(--muted)]">{ACCOUNT_TYPE_LABEL[account.type]}</div>
     </div>
   );
 }
@@ -94,13 +107,16 @@ export function TxRow({
   return (
     <Link
       href={`/transactions/${tx.id}/edit`}
-      className="flex items-center gap-3 px-3.5 py-3 active:bg-[var(--surface-2)]"
+      className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
     >
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
         style={{
           background: income ? "var(--income-soft)" : "var(--expense-soft)",
           color: income ? "var(--income)" : "var(--expense)",
+          boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${
+            income ? "var(--income)" : "var(--expense)"
+          } 22%, transparent)`,
         }}
       >
         {initials(tx.description || tx.category || "?")}

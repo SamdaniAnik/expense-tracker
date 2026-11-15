@@ -80,15 +80,16 @@ export default async function MonthsPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Link href={`/months?m=${shiftMonth(month, -1)}`} className="btn btn-ghost px-3" aria-label="Previous month">
+      <div className="mb-4 flex items-center justify-between gap-2 rise">
+        <Link href={`/months?m=${shiftMonth(month, -1)}`} className="btn btn-ghost px-3.5 text-lg" aria-label="Previous month">
           ‹
         </Link>
         <div className="text-center">
+          <p className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">Ledger</p>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">{label}</h1>
-          <p className="text-xs text-[var(--muted)]">Excel-style ledger · search &amp; sort</p>
+          <p className="text-xs text-[var(--faint)]">Excel-style ledger · search &amp; sort</p>
         </div>
-        <Link href={`/months?m=${shiftMonth(month, 1)}`} className="btn btn-ghost px-3" aria-label="Next month">
+        <Link href={`/months?m=${shiftMonth(month, 1)}`} className="btn btn-ghost px-3.5 text-lg" aria-label="Next month">
           ›
         </Link>
       </div>
@@ -101,25 +102,31 @@ export default async function MonthsPage({
       </div>
 
       <div className="mb-3 grid gap-2.5 sm:grid-cols-2">
-        <div className="card p-4">
-          <p className="text-xs font-medium text-[var(--muted)]">
+        <div className="card card-hover rise p-4">
+          <p className="text-xs font-semibold text-[var(--muted)]">
             Overall balance (start of month)
           </p>
           <p className="mt-1 text-2xl font-extrabold tabular-nums">
             {formatBDT(startingOverall)}
           </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
+          <p className="mt-1 text-xs text-[var(--faint)]">
             Same as Excel Overall Balance column
           </p>
         </div>
-        <div className="card p-4" style={{ background: "#fef9c3", borderColor: "#fde047" }}>
-          <p className="text-xs font-medium" style={{ color: "#854d0e" }}>
-            Closing (yellow cell)
+        <div
+          className="card card-hover rise rise-1 p-4"
+          style={{
+            background: "color-mix(in srgb, var(--gold) 14%, var(--surface))",
+            borderColor: "color-mix(in srgb, var(--gold) 45%, transparent)",
+          }}
+        >
+          <p className="text-xs font-semibold" style={{ color: "var(--gold)" }}>
+            Closing balance
           </p>
-          <p className="mt-1 text-2xl font-extrabold tabular-nums" style={{ color: "#121826" }}>
+          <p className="mt-1 text-2xl font-extrabold tabular-nums">
             {formatBDT(closingOverall)}
           </p>
-          <p className="mt-1 text-xs" style={{ color: "#a16207" }}>
+          <p className="mt-1 text-xs" style={{ color: "color-mix(in srgb, var(--gold) 80%, var(--muted))" }}>
             Start + Income − Expense
           </p>
         </div>

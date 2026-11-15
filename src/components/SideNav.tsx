@@ -39,10 +39,18 @@ export default function SideNav() {
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] px-3 py-5 lg:flex">
-      <div className="mb-8 px-2">
-        <p className="text-lg font-extrabold tracking-tight">Paisa</p>
-        <p className="text-xs text-[var(--muted)]">Personal finance</p>
+    <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-3.5 py-5 backdrop-blur lg:flex">
+      <div className="mb-8 flex items-center gap-3 px-1.5">
+        <span
+          className="flex h-10 w-10 items-center justify-center rounded-2xl text-xl font-extrabold text-white"
+          style={{ background: "var(--grad-primary)", boxShadow: "var(--shadow-primary)" }}
+        >
+          ৳
+        </span>
+        <div>
+          <p className="font-display text-lg font-extrabold leading-none tracking-tight">Paisa</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">Personal finance</p>
+        </div>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
@@ -52,12 +60,19 @@ export default function SideNav() {
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition"
+              className="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--surface-2)]"
               style={{
                 background: active ? "var(--surface-2)" : "transparent",
                 color: active ? "var(--primary)" : "var(--text)",
               }}
             >
+              {active && (
+                <span
+                  className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full"
+                  style={{ background: "var(--grad-primary)" }}
+                  aria-hidden
+                />
+              )}
               <Icon width={18} height={18} />
               {label}
             </Link>

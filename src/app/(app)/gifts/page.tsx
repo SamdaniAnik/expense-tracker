@@ -27,19 +27,41 @@ export default async function GiftsIndexPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-extrabold tracking-tight">Gift lists</h1>
-      <p className="mb-6 text-sm text-[var(--muted)]">
-        Separate from the monthly ledger — Biyer Gift and Babur Gift sheets.
-      </p>
+      <div className="mb-6 rise">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">Registers</p>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Gift lists</h1>
+        <p className="mt-0.5 text-sm text-[var(--muted)]">
+          Separate from the monthly ledger — Biyer Gift and Babur Gift sheets.
+        </p>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {cards.map((c) => (
-          <Link key={c.list} href={c.href} className="card block p-5 transition hover:border-[var(--primary)]">
-            <p className="text-lg font-bold">{GIFT_LIST_LABEL[c.list]}</p>
-            <p className="mt-1 text-sm text-[var(--muted)]">{c.blurb}</p>
-            <div className="mt-4 flex justify-between text-sm">
-              <span className="text-[var(--muted)]">{c.gifts.length} entries</span>
-              <span className="font-bold tabular-nums">{formatBDT(c.cash)} cash</span>
+        {cards.map((c, i) => (
+          <Link
+            key={c.list}
+            href={c.href}
+            className={`card card-hover rise group block p-5 ${i === 1 ? "rise-1" : ""}`}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl"
+                style={{
+                  background: "color-mix(in srgb, var(--primary) 12%, var(--surface))",
+                  boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent)",
+                }}
+              >
+                🎁
+              </span>
+              <div>
+                <p className="text-lg font-bold">{GIFT_LIST_LABEL[c.list]}</p>
+                <p className="text-sm text-[var(--muted)]">{c.blurb}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4 text-sm">
+              <span className="pill">{c.gifts.length} entries</span>
+              <span className="font-extrabold tabular-nums text-[var(--primary)]">
+                {formatBDT(c.cash)} <span className="text-xs font-semibold text-[var(--muted)]">cash</span>
+              </span>
             </div>
           </Link>
         ))}

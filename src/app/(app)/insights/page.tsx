@@ -136,28 +136,34 @@ export default async function InsightsPage({
 
   return (
     <div>
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 rise sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Reports</h1>
-          <p className="text-sm text-[var(--muted)]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">Insights</p>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Reports</h1>
+          <p className="mt-0.5 text-sm text-[var(--muted)]">
             {yearTxns.length.toLocaleString()} transactions in {year}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-wrap gap-1">
-            {years.slice(0, 8).map((y) => (
-              <Link
-                key={y}
-                href={`/insights?y=${y}`}
-                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold"
-                style={{
-                  background: String(y) === year ? "var(--primary)" : "var(--surface-2)",
-                  color: String(y) === year ? "var(--primary-ink)" : "var(--text)",
-                }}
-              >
-                {y}
-              </Link>
-            ))}
+            {years.slice(0, 8).map((y) => {
+              const activeYear = String(y) === year;
+              return (
+                <Link
+                  key={y}
+                  href={`/insights?y=${y}`}
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-bold transition-colors"
+                  style={{
+                    background: activeYear ? "var(--grad-primary)" : "var(--surface)",
+                    color: activeYear ? "#fff" : "var(--text)",
+                    border: "1px solid var(--border)",
+                    boxShadow: activeYear ? "var(--shadow-primary)" : "none",
+                  }}
+                >
+                  {y}
+                </Link>
+              );
+            })}
           </div>
           <a href={`/api/export?y=${year}`} className="btn btn-ghost text-sm">
             Export CSV
@@ -169,15 +175,20 @@ export default async function InsightsPage({
         <StatTile label={`${year} income`} value={income} tone="income" />
         <StatTile label={`${year} expense`} value={expense} tone="expense" />
         <StatTile label={`${year} net`} value={net} tone={net < 0 ? "expense" : "income"} />
-        <div className="card p-3.5">
-          <div className="text-xs font-medium text-[var(--muted)]">Savings rate</div>
+        <div className="card card-hover relative overflow-hidden p-3.5 pl-4">
+          <span
+            className="absolute inset-y-0 left-0 w-1"
+            style={{ background: savingsRate < 0 ? "var(--expense)" : "var(--income)" }}
+            aria-hidden
+          />
+          <div className="text-xs font-semibold text-[var(--muted)]">Savings rate</div>
           <div
-            className="mt-1 text-lg font-bold tabular-nums"
+            className="mt-1 text-lg font-extrabold tabular-nums"
             style={{ color: savingsRate < 0 ? "var(--expense)" : "var(--income)" }}
           >
             {savingsRate}%
           </div>
-          <div className="text-[0.65rem] text-[var(--muted)]">
+          <div className="text-[0.65rem] text-[var(--faint)]">
             vs {prevYear} net {netDelta >= 0 ? "+" : ""}
             {formatBDT(netDelta)}
           </div>
@@ -185,17 +196,17 @@ export default async function InsightsPage({
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <div className="card p-4">
-          <p className="text-xs text-[var(--muted)]">Avg monthly expense</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{formatBDT(avgExpense)}</p>
+        <div className="card card-hover p-4">
+          <p className="text-xs font-medium text-[var(--muted)]">Avg monthly expense</p>
+          <p className="mt-1 text-xl font-extrabold tabular-nums">{formatBDT(avgExpense)}</p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-[var(--muted)]">Active months</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{monthsReal.length}</p>
+        <div className="card card-hover p-4">
+          <p className="text-xs font-medium text-[var(--muted)]">Active months</p>
+          <p className="mt-1 text-xl font-extrabold tabular-nums">{monthsReal.length}</p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-[var(--muted)]">{prevYear} expense</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{formatBDT(fromPaisa(prevExpenseP))}</p>
+        <div className="card card-hover p-4">
+          <p className="text-xs font-medium text-[var(--muted)]">{prevYear} expense</p>
+          <p className="mt-1 text-xl font-extrabold tabular-nums">{formatBDT(fromPaisa(prevExpenseP))}</p>
         </div>
       </div>
 

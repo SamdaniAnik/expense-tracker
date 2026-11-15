@@ -44,13 +44,16 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-dvh flex items-center justify-center px-5">
-      <div className="card w-full max-w-sm p-7">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary)] text-[var(--primary-ink)] text-xl font-bold">
+      <div className="card rise w-full max-w-sm p-7 sm:p-8">
+        <div className="mb-7 text-center">
+          <div
+            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-extrabold text-white"
+            style={{ background: "var(--grad-primary)", boxShadow: "var(--shadow-primary)" }}
+          >
             ৳
           </div>
-          <h1 className="text-xl font-bold">Paisa</h1>
-          <p className="text-sm text-[var(--muted)]">Your private money tracker</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight">Paisa</h1>
+          <p className="mt-1 text-sm text-[var(--muted)]">Your private money tracker</p>
         </div>
 
         <form onSubmit={signIn} className="space-y-4">

@@ -20,9 +20,10 @@ export default async function TransactionsPage({
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="text-2xl font-extrabold tracking-tight">Activity</h1>
-        <p className="text-sm text-[var(--muted)]">Search, filter, and sort every entry</p>
+      <div className="mb-4 rise">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">Ledger</p>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Activity</h1>
+        <p className="mt-0.5 text-sm text-[var(--muted)]">Search, filter, and sort every entry</p>
       </div>
 
       <TxFilters accounts={accounts} />
@@ -69,11 +70,14 @@ function Sum({
   soft: string;
 }) {
   return (
-    <div className="card p-3" style={{ background: soft, borderColor: "transparent" }}>
-      <div className="text-xs font-semibold" style={{ color }}>
+    <div
+      className="card card-hover p-3"
+      style={{ background: soft, borderColor: `color-mix(in srgb, ${color} 28%, transparent)` }}
+    >
+      <div className="text-xs font-bold uppercase tracking-wide" style={{ color }}>
         {label}
       </div>
-      <div className="mt-1 text-sm font-bold tabular-nums sm:text-base" style={{ color }}>
+      <div className="mt-1 text-sm font-extrabold tabular-nums sm:text-base" style={{ color }}>
         {formatBDT(value)}
       </div>
     </div>

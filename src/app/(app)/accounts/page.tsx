@@ -16,7 +16,10 @@ export default async function AccountsPage() {
 
   return (
     <div>
-      <h1 className="mb-3 text-xl font-bold">Accounts</h1>
+      <div className="mb-4 rise">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">Wallet</p>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Accounts</h1>
+      </div>
 
       <div className="space-y-2.5">
         {active.map((a) => (
@@ -69,14 +72,20 @@ export default async function AccountsPage() {
 }
 
 function AccountItem({ account, balance }: { account: Account; balance: number }) {
+  const emoji = account.type === "bank" ? "🏦" : account.type === "mobile" ? "📱" : "💵";
   return (
-    <details className="card overflow-hidden">
-      <summary className="flex cursor-pointer items-center justify-between p-4">
-        <div>
-          <div className="text-sm font-semibold">{account.name}</div>
-          <div className="text-xs text-[var(--muted)]">{ACCOUNT_TYPE_LABEL[account.type]}</div>
+    <details className="card card-hover overflow-hidden">
+      <summary className="flex cursor-pointer items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-base ring-1 ring-[var(--border)]">
+            {emoji}
+          </span>
+          <div>
+            <div className="text-sm font-bold">{account.name}</div>
+            <div className="text-xs text-[var(--muted)]">{ACCOUNT_TYPE_LABEL[account.type]}</div>
+          </div>
         </div>
-        <div className="text-base font-bold tabular-nums" style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}>
+        <div className="text-base font-extrabold tabular-nums" style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}>
           {formatBDT(balance)}
         </div>
       </summary>

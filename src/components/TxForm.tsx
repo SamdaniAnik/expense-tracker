@@ -52,17 +52,18 @@ export default function TxForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form action={handleSubmit} className="card rise space-y-4 p-5 sm:max-w-xl">
       {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
       {/* income / expense toggle */}
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-2)] p-1">
+      <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[var(--surface-2)] p-1">
         <button
           type="button"
           onClick={() => setType("expense")}
-          className="rounded-lg py-2.5 text-sm font-bold transition"
+          className="rounded-lg py-2.5 text-sm font-bold transition-all"
           style={{
             background: type === "expense" ? "var(--expense)" : "transparent",
             color: type === "expense" ? "#fff" : "var(--muted)",
+            boxShadow: type === "expense" ? "0 4px 12px -4px color-mix(in srgb, var(--expense) 60%, transparent)" : "none",
           }}
         >
           Expense
@@ -70,10 +71,11 @@ export default function TxForm({
         <button
           type="button"
           onClick={() => setType("income")}
-          className="rounded-lg py-2.5 text-sm font-bold transition"
+          className="rounded-lg py-2.5 text-sm font-bold transition-all"
           style={{
             background: type === "income" ? "var(--income)" : "transparent",
             color: type === "income" ? "#fff" : "var(--muted)",
+            boxShadow: type === "income" ? "0 4px 12px -4px color-mix(in srgb, var(--income) 60%, transparent)" : "none",
           }}
         >
           Income

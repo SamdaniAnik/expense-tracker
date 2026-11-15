@@ -63,12 +63,12 @@ export default async function DashboardPage({
 
   return (
     <div className="pb-2">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-6 flex flex-col gap-4 rise sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">
             Dashboard
           </p>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          <h1 className="mt-1.5 text-3xl font-extrabold tracking-tight sm:text-4xl">
             {monthLabel}
           </h1>
         </div>
@@ -87,51 +87,58 @@ export default async function DashboardPage({
       </div>
 
       <div className="mb-6 grid gap-3 lg:grid-cols-12">
-        <div
-          className="card p-5 lg:col-span-5"
-          style={{
-            background: "linear-gradient(145deg, #fef9c3 0%, #fde68a 100%)",
-            borderColor: "#facc15",
-          }}
-        >
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#854d0e" }}>
+        <div className="hero rise rise-1 p-6 lg:col-span-5">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">
             Total balance
           </p>
           <p
-            className="mt-2 text-3xl font-extrabold tabular-nums sm:text-4xl"
-            style={{ color: excel.closing < 0 ? "#be123c" : "#121826" }}
+            className="mt-2.5 font-display text-4xl font-extrabold tabular-nums sm:text-[2.75rem]"
+            style={{ color: excel.closing < 0 ? "#fecdd3" : "#ffffff" }}
           >
             {formatBDT(excel.closing)}
           </p>
-          <p className="mt-2 text-xs" style={{ color: "#a16207" }}>
-            Starting balances + income − expense
-          </p>
-          <p className="mt-3 text-xs tabular-nums" style={{ color: "#854d0e" }}>
-            {formatBDT(excel.opening)} + {formatBDT(excel.income)} − {formatBDT(excel.expense)}
-          </p>
+          <div className="mt-4 inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-full bg-white/12 px-3 py-1.5 text-xs font-medium tabular-nums text-white/85 backdrop-blur">
+            <span className="text-white/60">Open</span> {formatBDT(excel.opening)}
+            <span className="text-emerald-200">+{formatBDT(excel.income)}</span>
+            <span className="text-rose-200">−{formatBDT(excel.expense)}</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3 lg:col-span-7">
-          <div className="card p-4" style={{ background: "#ecfdf5", borderColor: "#a7f3d0" }}>
-            <p className="text-xs font-semibold" style={{ color: "#047857" }}>
-              Income
-            </p>
-            <p className="mt-2 text-xl font-bold tabular-nums sm:text-2xl" style={{ color: "#047857" }}>
+          <div
+            className="card card-hover rise rise-2 flex flex-col justify-between p-4"
+            style={{ background: "var(--income-soft)", borderColor: "color-mix(in srgb, var(--income) 30%, transparent)" }}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-base leading-none" style={{ color: "var(--income)" }}>↑</span>
+              <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--income)" }}>
+                Income
+              </p>
+            </div>
+            <p className="mt-2 text-xl font-extrabold tabular-nums sm:text-2xl" style={{ color: "var(--income)" }}>
               {formatBDT(excel.income)}
             </p>
           </div>
-          <div className="card p-4" style={{ background: "#fff1f2", borderColor: "#fecdd3" }}>
-            <p className="text-xs font-semibold" style={{ color: "#be123c" }}>
-              Expense
-            </p>
-            <p className="mt-2 text-xl font-bold tabular-nums sm:text-2xl" style={{ color: "#be123c" }}>
+          <div
+            className="card card-hover rise rise-3 flex flex-col justify-between p-4"
+            style={{ background: "var(--expense-soft)", borderColor: "color-mix(in srgb, var(--expense) 30%, transparent)" }}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-base leading-none" style={{ color: "var(--expense)" }}>↓</span>
+              <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--expense)" }}>
+                Expense
+              </p>
+            </div>
+            <p className="mt-2 text-xl font-extrabold tabular-nums sm:text-2xl" style={{ color: "var(--expense)" }}>
               {formatBDT(excel.expense)}
             </p>
           </div>
-          <div className="card p-4">
-            <p className="text-xs font-semibold text-[var(--muted)]">Overall balance</p>
-            <p className="mt-2 text-xl font-bold tabular-nums sm:text-2xl">{formatBDT(excel.opening)}</p>
-            <p className="text-[0.65rem] text-[var(--muted)]">start of month</p>
+          <div className="card card-hover rise rise-4 flex flex-col justify-between p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">Opening</p>
+            <div>
+              <p className="mt-2 text-xl font-extrabold tabular-nums sm:text-2xl">{formatBDT(excel.opening)}</p>
+              <p className="text-[0.65rem] text-[var(--faint)]">start of month</p>
+            </div>
           </div>
         </div>
       </div>

@@ -30,7 +30,8 @@ export default function BottomNav() {
         <Link
           href={addHref}
           aria-label="Add transaction"
-          className="relative -mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-[var(--primary-ink)] shadow-lg active:translate-y-px"
+          className="relative -mt-7 flex items-center justify-center rounded-full text-white ring-4 ring-[var(--bg)] transition-transform active:scale-95"
+          style={{ background: "var(--grad-primary)", boxShadow: "var(--shadow-primary)", height: "3.5rem", width: "3.5rem" }}
         >
           <PlusIcon width={26} height={26} />
         </Link>
@@ -57,9 +58,16 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[0.68rem] font-medium"
+      className="relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[0.68rem] font-semibold transition-colors"
       style={{ color: active ? "var(--primary)" : "var(--muted)" }}
     >
+      {active && (
+        <span
+          className="absolute top-1 h-1 w-1 rounded-full"
+          style={{ background: "var(--primary)" }}
+          aria-hidden
+        />
+      )}
       <Icon />
       <span>{label}</span>
     </Link>

@@ -35,7 +35,10 @@ export default async function AddPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-bold">{title}</h1>
+      <div className="mb-5 rise">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">New entry</p>
+        <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h1>
+      </div>
       {active.length === 0 ? (
         <Empty>
           You need an account first.{" "}

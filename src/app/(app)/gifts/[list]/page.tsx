@@ -38,46 +38,58 @@ export default async function GiftListPage({
 
   return (
     <div>
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 rise sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <Link href="/gifts" className="text-xs font-semibold text-[var(--primary)]">
+          <Link href="/gifts" className="text-xs font-bold uppercase tracking-wide text-[var(--primary)]">
             ← All gift lists
           </Link>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight">{label}</h1>
-          <p className="text-sm text-[var(--muted)]">
+          <h1 className="mt-1.5 text-3xl font-extrabold tracking-tight">{label}</h1>
+          <p className="mt-0.5 text-sm text-[var(--muted)]">
             From the Google Sheet · separate from monthly expenses
           </p>
         </div>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="card p-4">
-          <p className="text-xs text-[var(--muted)]">Entries</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{gifts.length}</p>
+        <div className="card card-hover p-4">
+          <p className="text-xs font-medium text-[var(--muted)]">Entries</p>
+          <p className="mt-1 text-xl font-extrabold tabular-nums">{gifts.length}</p>
         </div>
-        <div className="card p-4" style={{ background: "#ecfdf5", borderColor: "#a7f3d0" }}>
-          <p className="text-xs font-semibold" style={{ color: "#047857" }}>
+        <div
+          className="card card-hover p-4"
+          style={{
+            background: "var(--income-soft)",
+            borderColor: "color-mix(in srgb, var(--income) 30%, transparent)",
+          }}
+        >
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--income)" }}>
             Cash gifts
           </p>
-          <p className="mt-1 text-xl font-bold tabular-nums" style={{ color: "#047857" }}>
+          <p className="mt-1 text-xl font-extrabold tabular-nums" style={{ color: "var(--income)" }}>
             {formatBDT(cash)}
           </p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-[var(--muted)]">Item gifts</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{items}</p>
+        <div className="card card-hover p-4">
+          <p className="text-xs font-medium text-[var(--muted)]">Item gifts</p>
+          <p className="mt-1 text-xl font-extrabold tabular-nums">{items}</p>
         </div>
         {metaGrand?.amount != null ? (
-          <div className="card p-4" style={{ background: "#fef9c3", borderColor: "#fde047" }}>
-            <p className="text-xs font-semibold" style={{ color: "#854d0e" }}>
+          <div
+            className="card card-hover p-4"
+            style={{
+              background: "color-mix(in srgb, var(--gold) 14%, var(--surface))",
+              borderColor: "color-mix(in srgb, var(--gold) 45%, transparent)",
+            }}
+          >
+            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--gold)" }}>
               {metaGrand.name}
             </p>
-            <p className="mt-1 text-xl font-bold tabular-nums">{formatBDT(Number(metaGrand.amount))}</p>
+            <p className="mt-1 text-xl font-extrabold tabular-nums">{formatBDT(Number(metaGrand.amount))}</p>
           </div>
         ) : (
-          <div className="card p-4">
-            <p className="text-xs text-[var(--muted)]">Sheet cash total</p>
-            <p className="mt-1 text-xl font-bold tabular-nums">
+          <div className="card card-hover p-4">
+            <p className="text-xs font-medium text-[var(--muted)]">Sheet cash total</p>
+            <p className="mt-1 text-xl font-extrabold tabular-nums">
               {metaCash?.amount != null ? formatBDT(Number(metaCash.amount)) : "—"}
             </p>
           </div>

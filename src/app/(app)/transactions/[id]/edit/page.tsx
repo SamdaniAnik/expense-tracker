@@ -19,7 +19,10 @@ export default async function EditTxPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-bold">Edit transaction</h1>
+      <div className="mb-5 rise">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">Edit</p>
+        <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Edit transaction</h1>
+      </div>
       <TxForm
         accounts={accounts}
         categories={categorySuggestions(used)}
