@@ -133,3 +133,38 @@ export function runningOverallBalances(
     return fromPaisa(paisa);
   });
 }
+
+/** Opening overall for YYYY-MM (Excel summary cell next to income/expense). */
+export function monthOpeningOverall(
+  accounts: Pick<Account, "opening_balance" | "opening_date">[],
+  txns: Pick<Transaction, "date" | "type" | "amount">[],
+  ym: string,
+): number {
+  const monthStart = `${ym}-01`;
+  let paisa = 0;
+  for (const a of accounts) {
+    if (a.opening_date <= monthStart) paisa += toPaisa(a.opening_balance);
+  }
+  for (const t of txns) {
+    if (t.date < monthStart) paisa += signedPaisa(t);
+  }
+  return fromPaisa(paisa);
+}
+
+/**
+ * Excel month footer figures:
+ * - opening (sum of beginning balances / prior activity)
+ * - income / expense for the month (green / pink)
+ * - closing (yellow) = opening + income − expense
+ */
+export function excelMonthSummary(
+  accounts: Pick<Account, "opening_balance" | "opening_date">[],
+  txns: Pick<Transaction, "date" | "type" | "amount">[],
+  ym: string,
+): { opening: number; income: number; expense: number; closing: number } {
+  const [y, m] = ym.split("-").map(Number);
+  const { income, expense } = monthTotals(txns, y, m);
+  const opening = monthOpeningOverall(accounts, txns, ym);
+  const closing = fromPaisa(toPaisa(opening) + toPaisa(income) - toPaisa(expense));
+  return { opening, income, expense, closing };
+}

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
-import { overallBalance, accountBalance, monthTotals } from "@/lib/balances";
+import { accountBalance, excelMonthSummary } from "@/lib/balances";
 import { formatBDT } from "@/lib/money";
-import { StatTile, SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
+import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 
 export default async function DashboardPage() {
   const [accounts, txns, recent] = await Promise.all([
@@ -12,38 +12,81 @@ export default async function DashboardPage() {
   ]);
 
   const active = accounts.filter((a) => !a.archived);
-  const total = overallBalance(active, txns);
   const now = new Date();
-  const month = monthTotals(txns, now.getFullYear(), now.getMonth() + 1);
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  // Match Google Sheet month footer: yellow closing, green income, pink expense, opening overall
+  const excel = excelMonthSummary(active, txns, ym);
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const monthLabel = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 
   return (
     <div>
-      <header className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-[var(--muted)]">Total balance</p>
+      <header className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-[var(--muted)]">Total balance · {monthLabel}</p>
+          {/* Yellow cell in the sheet = closing overall for the current month */}
           <p
-            className="text-3xl font-extrabold tabular-nums"
-            style={{ color: total < 0 ? "var(--expense)" : "var(--text)" }}
+            className="mt-1 inline-block rounded-lg px-2.5 py-1 text-3xl font-extrabold tabular-nums"
+            style={{
+              background: "#fef08a",
+              color: excel.closing < 0 ? "var(--expense)" : "#121826",
+            }}
+            title="Closing overall = Opening + Income − Expense (Excel yellow cell)"
           >
-            {formatBDT(total)}
+            {formatBDT(excel.closing)}
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Closing overall (Excel yellow)
           </p>
         </div>
         <Link
           href="/accounts"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface)] border border-[var(--border)] text-lg"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-lg"
           aria-label="Accounts & settings"
         >
           ⚙️
         </Link>
       </header>
 
-      <SectionTitle>{monthLabel}</SectionTitle>
-      <div className="grid grid-cols-3 gap-2.5">
-        <StatTile label="Income" value={month.income} tone="income" />
-        <StatTile label="Expense" value={month.expense} tone="expense" />
-        <StatTile label="Net" value={month.net} tone={month.net < 0 ? "expense" : "income"} />
+      {/* Same three figures as the sheet summary row */}
+      <div className="mb-1 grid grid-cols-3 gap-2.5">
+        <div
+          className="card p-3.5"
+          style={{ background: "#ecfdf5", borderColor: "#a7f3d0" }}
+        >
+          <div className="text-xs font-medium" style={{ color: "#047857" }}>
+            Income
+          </div>
+          <div className="mt-1 text-lg font-bold tabular-nums" style={{ color: "#047857" }}>
+            {formatBDT(excel.income)}
+          </div>
+        </div>
+        <div
+          className="card p-3.5"
+          style={{ background: "#fff1f2", borderColor: "#fecdd3" }}
+        >
+          <div className="text-xs font-medium" style={{ color: "#be123c" }}>
+            Expense
+          </div>
+          <div className="mt-1 text-lg font-bold tabular-nums" style={{ color: "#be123c" }}>
+            {formatBDT(excel.expense)}
+          </div>
+        </div>
+        <div className="card p-3.5">
+          <div className="text-xs font-medium text-[var(--muted)]">Opening</div>
+          <div className="mt-1 text-lg font-bold tabular-nums">{formatBDT(excel.opening)}</div>
+        </div>
+      </div>
+      <p className="mb-4 text-xs text-[var(--muted)]">
+        Opening {formatBDT(excel.opening)} + Income {formatBDT(excel.income)} − Expense{" "}
+        {formatBDT(excel.expense)} ={" "}
+        <span className="font-semibold text-[var(--text)]">{formatBDT(excel.closing)}</span>
+      </p>
+
+      <div className="mb-4 text-right">
+        <Link href={`/months?m=${ym}`} className="text-xs font-semibold text-[var(--primary)]">
+          Open {monthLabel} ledger →
+        </Link>
       </div>
 
       <SectionTitle action={<Link href="/accounts" className="text-xs font-semibold text-[var(--primary)]">Manage</Link>}>
