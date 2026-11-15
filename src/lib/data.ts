@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, Transaction } from "./types";
 
@@ -9,7 +11,8 @@ export async function getUser() {
   return user;
 }
 
-export async function getAccounts(): Promise<Account[]> {
+/** Per-request dedupe. */
+export const getAccounts = cache(async (): Promise<Account[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("accounts")
@@ -18,7 +21,7 @@ export async function getAccounts(): Promise<Account[]> {
     .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Account[];
-}
+});
 
 export interface TxFilter {
   month?: string; // YYYY-MM
@@ -26,18 +29,29 @@ export interface TxFilter {
   category?: string;
   search?: string;
   limit?: number;
+  /** When true, only columns needed for lists/balances. */
+  lean?: boolean;
 }
+
+const FULL_COLS =
+  "id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at";
+const LEAN_COLS = "id,account_id,date,type,amount,description,category,created_at";
 
 export async function getTransactions(
   filter: TxFilter = {},
 ): Promise<Transaction[]> {
   const supabase = await createClient();
-  let q = supabase.from("transactions").select("*");
+  // Avoid dynamic select strings — supabase-js types them as parse errors.
+  const base = filter.lean
+    ? supabase.from("transactions").select(LEAN_COLS)
+    : supabase.from("transactions").select(FULL_COLS);
 
+  let q = base;
   if (filter.month) {
     const [y, m] = filter.month.split("-").map(Number);
     const start = `${filter.month}-01`;
-    const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+    const end =
+      m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
     q = q.gte("date", start).lt("date", end);
   }
   if (filter.accountId) q = q.eq("account_id", filter.accountId);
@@ -49,23 +63,52 @@ export async function getTransactions(
 
   const { data, error } = await q;
   if (error) throw error;
-  return (data ?? []) as Transaction[];
+  return (data ?? []) as unknown as Transaction[];
 }
 
-/** All transactions, used for whole-period computations (balances, charts).
- * Paginates past Supabase's default 1000-row cap. */
-export async function getAllTransactions(): Promise<Transaction[]> {
+async function fetchAllTransactions(): Promise<Transaction[]> {
   const supabase = await createClient();
   const pageSize = 1000;
   const out: Transaction[] = [];
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("transactions")
-      .select(
-        "id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at",
-      )
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false })
+      .select(LEAN_COLS)
+      .order("date", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as Transaction[];
+    out.push(...chunk);
+    if (chunk.length < pageSize) break;
+  }
+  return out;
+}
+
+/**
+ * All transactions (lean columns), cached ~2 min per user.
+ * Home/months should prefer month-scoped queries when possible.
+ */
+export async function getAllTransactions(): Promise<Transaction[]> {
+  const user = await getUser();
+  const userId = user?.id ?? "anon";
+  return unstable_cache(
+    () => fetchAllTransactions(),
+    [`all-txns-v2`, userId],
+    { revalidate: 120, tags: [`txns-${userId}`] },
+  )();
+}
+
+/** Transactions strictly before a date (for opening-balance reconstruction). */
+export async function getTransactionsBefore(beforeDate: string): Promise<Transaction[]> {
+  const supabase = await createClient();
+  const pageSize = 1000;
+  const out: Transaction[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("account_id,date,type,amount")
+      .lt("date", beforeDate)
+      .order("date", { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw error;
     const chunk = (data ?? []) as Transaction[];
@@ -86,18 +129,26 @@ export async function getTransaction(id: string): Promise<Transaction | null> {
   return (data as Transaction) ?? null;
 }
 
-/** Distinct categories the user has actually used, for suggestions. */
 export async function getUsedCategories(): Promise<string[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("transactions")
     .select("category")
     .not("category", "is", null)
-    .limit(2000);
+    .limit(3000);
   const set = new Set<string>();
   for (const row of data ?? []) {
     const c = (row as { category: string | null }).category;
     if (c) set.add(c);
   }
   return [...set].sort();
+}
+
+export async function getTransactionCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("transactions")
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
 }

@@ -1,8 +1,17 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+function bustTxCache(userId: string) {
+  updateTag(`txns-${userId}`);
+  revalidatePath("/");
+  revalidatePath("/transactions");
+  revalidatePath("/months");
+  revalidatePath("/insights");
+  revalidatePath("/accounts");
+}
 
 function parseForm(formData: FormData) {
   const amount = Number(
@@ -42,9 +51,7 @@ export async function createTx(formData: FormData) {
   if (error) return { error: error.message };
 
   const returnTo = String(formData.get("return_to") ?? "").trim();
-  revalidatePath("/");
-  revalidatePath("/transactions");
-  revalidatePath("/months");
+  bustTxCache(user.id);
   redirect(returnTo.startsWith("/") ? returnTo : "/");
 }
 
@@ -62,15 +69,18 @@ export async function updateTx(id: string, formData: FormData) {
   const { error } = await supabase.from("transactions").update(v).eq("id", id);
   if (error) return { error: error.message };
 
-  revalidatePath("/");
-  revalidatePath("/transactions");
-  revalidatePath("/months");
+  bustTxCache(user.id);
   const month = v.date.slice(0, 7);
   redirect(month ? `/months?m=${month}` : "/transactions");
 }
 
 export async function deleteTx(id: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const { data: existing } = await supabase
     .from("transactions")
     .select("date")
@@ -78,9 +88,7 @@ export async function deleteTx(id: string) {
     .maybeSingle();
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/");
-  revalidatePath("/transactions");
-  revalidatePath("/months");
+  bustTxCache(user.id);
   const month = existing?.date ? String(existing.date).slice(0, 7) : "";
   redirect(month ? `/months?m=${month}` : "/transactions");
 }

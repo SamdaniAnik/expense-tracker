@@ -7,7 +7,7 @@ import { HomeIcon, ListIcon, ChartIcon, WalletIcon, PlusIcon } from "./icons";
 const items = [
   { href: "/", label: "Home", Icon: HomeIcon, match: (p: string) => p === "/" },
   { href: "/months", label: "Months", Icon: ListIcon, match: (p: string) => p.startsWith("/months") || p.startsWith("/transactions") },
-  { href: "/insights", label: "Insights", Icon: ChartIcon, match: (p: string) => p.startsWith("/insights") },
+  { href: "/insights", label: "Reports", Icon: ChartIcon, match: (p: string) => p.startsWith("/insights") },
   { href: "/accounts", label: "Accounts", Icon: WalletIcon, match: (p: string) => p.startsWith("/accounts") },
 ];
 

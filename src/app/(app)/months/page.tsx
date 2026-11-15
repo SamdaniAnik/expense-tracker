@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
+import { getAccounts, getTransactions, getTransactionsBefore } from "@/lib/data";
 import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
 import { accountBalanceAsOf, excelMonthSummary } from "@/lib/balances";
 import { getExcelMonthSummary } from "@/lib/month-summaries";
+import { accountKeyFromName } from "@/lib/account-key";
 import { StatTile, Empty } from "@/components/ui";
 import MonthJump from "@/components/MonthJump";
-import type { Account, Transaction } from "@/lib/types";
+import type { Transaction } from "@/lib/types";
 
 function shiftMonth(ym: string, delta: number) {
   const [y, m] = ym.split("-").map(Number);
@@ -31,36 +32,35 @@ export default async function MonthsPage({
     sp.m ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const monthStart = `${month}-01`;
 
-  const [accounts, allTxns, monthTxnsRaw] = await Promise.all([
+  const sheet = getExcelMonthSummary(month);
+  const [accounts, monthTxnsRaw, priorTxns] = await Promise.all([
     getAccounts(),
-    getAllTransactions(),
-    getTransactions({ month }),
+    getTransactions({ month, lean: true }),
+    sheet ? Promise.resolve([]) : getTransactionsBefore(monthStart),
   ]);
 
   const active = accounts.filter((a) => !a.archived);
 
   const txns = [...(monthTxnsRaw as Transaction[])].sort(
-    (a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at),
+    (a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(a.created_at),
   );
 
-  const sheet = getExcelMonthSummary(month);
-  const summary = excelMonthSummary(active, allTxns, month, sheet);
+  const summary = excelMonthSummary(
+    active,
+    sheet ? monthTxnsRaw : [...priorTxns, ...monthTxnsRaw],
+    month,
+    sheet,
+  );
   const startingOverall = summary.opening;
   const closingOverall = summary.closing;
   const incomeP = toPaisa(summary.income);
   const expenseP = toPaisa(summary.expense);
 
-  const priorTxns = allTxns.filter((t) => t.date < monthStart);
   const beginRows = active
-    .filter((a) => a.opening_date <= monthStart)
+    .filter((a) => a.opening_date <= monthStart || sheet?.accounts?.[accountKeyFromName(a.name)])
     .map((a) => {
-      const key =
-        /standard|scb/i.test(a.name) ? "SCB"
-        : /bkash/i.test(a.name) ? "BKASH"
-        : /nagad/i.test(a.name) ? "NAGAD"
-        : /cash/i.test(a.name) ? "CASH"
-        : "";
-      const fromSheet = key && sheet?.accounts?.[key];
+      const key = accountKeyFromName(a.name);
+      const fromSheet = key ? sheet?.accounts?.[key] : undefined;
       return {
         account: a,
         balance:

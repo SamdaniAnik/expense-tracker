@@ -15,7 +15,7 @@ const items = [
   },
   {
     href: "/insights",
-    label: "Insights",
+    label: "Reports",
     Icon: ChartIcon,
     match: (p: string) => p.startsWith("/insights"),
   },

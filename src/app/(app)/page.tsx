@@ -1,14 +1,27 @@
 import Link from "next/link";
-import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
-import {
-  accountBalanceAsOf,
-  excelMonthSummary,
-  lastDayOfMonth,
-} from "@/lib/balances";
+import { getAccounts, getTransactions, getTransactionsBefore } from "@/lib/data";
+import { excelMonthSummary } from "@/lib/balances";
 import { getExcelMonthSummary, getExcelYears } from "@/lib/month-summaries";
-import { formatBDT } from "@/lib/money";
+import { accountKeyFromName } from "@/lib/account-key";
+import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
 import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 import HomeMonthPicker from "@/components/HomeMonthPicker";
+import type { Account, Transaction } from "@/lib/types";
+
+/** End-of-month balance without loading full history when Excel openings exist. */
+function monthEndBalance(
+  account: Account,
+  monthTxns: Transaction[],
+  sheetOpening: number | undefined,
+): number {
+  let paisa =
+    typeof sheetOpening === "number" ? toPaisa(sheetOpening) : toPaisa(account.opening_balance);
+  for (const t of monthTxns) {
+    if (t.account_id !== account.id) continue;
+    paisa += t.type === "income" ? toPaisa(t.amount) : -toPaisa(t.amount);
+  }
+  return fromPaisa(paisa);
+}
 
 export default async function DashboardPage({
   searchParams,
@@ -19,18 +32,23 @@ export default async function DashboardPage({
   const now = new Date();
   const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const ym = sp.m && /^\d{4}-\d{2}$/.test(sp.m) ? sp.m : fallback;
-  const monthEnd = lastDayOfMonth(ym);
 
-  const [accounts, allTxns, monthTxns] = await Promise.all([
+  const sheet = getExcelMonthSummary(ym);
+  // Fast path: this month only. If no Excel opening snapshot, also load prior rows once.
+  const [accounts, monthTxns, priorTxns] = await Promise.all([
     getAccounts(),
-    getAllTransactions(),
-    getTransactions({ month: ym }),
+    getTransactions({ month: ym, lean: true }),
+    sheet ? Promise.resolve([]) : getTransactionsBefore(`${ym}-01`),
   ]);
 
   const active = accounts.filter((a) => !a.archived);
-  const excel = excelMonthSummary(active, allTxns, ym, getExcelMonthSummary(ym));
+  const excel = excelMonthSummary(
+    active,
+    sheet ? monthTxns : [...priorTxns, ...monthTxns],
+    ym,
+    sheet,
+  );
 
-  // Recent: newest first (last Excel row / latest entry at top)
   const recent = [...monthTxns].sort(
     (a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at),
   );
@@ -45,7 +63,6 @@ export default async function DashboardPage({
 
   return (
     <div className="pb-2">
-      {/* Web header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
@@ -60,20 +77,22 @@ export default async function DashboardPage({
           <Link href={addHref} className="btn btn-primary text-sm lg:hidden">
             ＋ Add
           </Link>
-          <Link
-            href={`/months?m=${ym}`}
-            className="btn btn-ghost text-sm hidden sm:inline-flex"
-          >
+          <Link href={`/months?m=${ym}`} className="btn btn-ghost text-sm hidden sm:inline-flex">
             Full ledger
+          </Link>
+          <Link href={`/insights?y=${ym.slice(0, 4)}`} className="btn btn-ghost text-sm hidden sm:inline-flex">
+            Reports
           </Link>
         </div>
       </div>
 
-      {/* Summary strip — web grid */}
       <div className="mb-6 grid gap-3 lg:grid-cols-12">
         <div
           className="card p-5 lg:col-span-5"
-          style={{ background: "linear-gradient(145deg, #fef9c3 0%, #fde68a 100%)", borderColor: "#facc15" }}
+          style={{
+            background: "linear-gradient(145deg, #fef9c3 0%, #fde68a 100%)",
+            borderColor: "#facc15",
+          }}
         >
           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#854d0e" }}>
             Total balance
@@ -117,7 +136,6 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* Accounts + activity — two columns on web */}
       <div className="grid gap-6 lg:grid-cols-12">
         <section className="lg:col-span-4">
           <SectionTitle
@@ -139,19 +157,19 @@ export default async function DashboardPage({
             </Empty>
           ) : (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-1">
-              {active.map((a) => (
-                <AccountCard
-                  key={a.id}
-                  account={a}
-                  balance={accountBalanceAsOf(a, allTxns, monthEnd)}
-                />
-              ))}
+              {active.map((a) => {
+                const key = accountKeyFromName(a.name);
+                const open = key ? sheet?.accounts?.[key] : undefined;
+                return (
+                  <AccountCard
+                    key={a.id}
+                    account={a}
+                    balance={monthEndBalance(a, monthTxns, open)}
+                  />
+                );
+              })}
             </div>
           )}
-          <p className="mt-2 text-xs text-[var(--muted)]">
-            Balances as of end of {monthLabel}. Lifetime total still uses all{" "}
-            {allTxns.length.toLocaleString()} transactions in Supabase.
-          </p>
         </section>
 
         <section className="lg:col-span-8">
@@ -174,14 +192,12 @@ export default async function DashboardPage({
             </Empty>
           ) : (
             <>
-              {/* Mobile: compact list, newest first */}
               <div className="card divide-y divide-[var(--border)] overflow-hidden lg:hidden">
-                {recent.map((t) => (
+                {recent.slice(0, 40).map((t) => (
                   <TxRow key={t.id} tx={t} accountName={accountName.get(t.account_id) ?? "—"} />
                 ))}
               </div>
 
-              {/* Web: table, newest first */}
               <div className="card hidden overflow-hidden lg:block">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[40rem] border-collapse text-sm">
@@ -215,9 +231,6 @@ export default async function DashboardPage({
                             >
                               {t.description || "—"}
                             </Link>
-                            {t.category ? (
-                              <div className="text-xs text-[var(--muted)]">{t.category}</div>
-                            ) : null}
                           </td>
                           <td className="whitespace-nowrap px-4 py-2.5 text-[var(--muted)]">
                             {accountName.get(t.account_id) ?? "—"}
@@ -247,7 +260,6 @@ export default async function DashboardPage({
           )}
         </section>
       </div>
-
     </div>
   );
 }
