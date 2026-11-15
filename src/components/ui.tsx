@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatBDT } from "@/lib/money";
+import { formatBDT, formatBDTCompact } from "@/lib/money";
 import { ACCOUNT_TYPE_LABEL, type Account, type Transaction } from "@/lib/types";
 
 export function StatTile({
@@ -24,15 +24,18 @@ export function StatTile({
         ? "var(--expense)"
         : "var(--primary)";
   return (
-    <div className="card card-hover relative overflow-hidden p-3.5 pl-4">
+    <div className="card card-hover relative min-w-0 overflow-hidden p-3 pl-3.5 sm:p-3.5 sm:pl-4">
       <span
         className="absolute inset-y-0 left-0 w-1"
         style={{ background: accent }}
         aria-hidden
       />
-      <div className="text-xs font-semibold text-[var(--muted)]">{label}</div>
-      <div className="mt-1 text-lg font-extrabold tabular-nums" style={{ color }}>
-        {formatBDT(value)}
+      <div className="truncate text-[0.65rem] font-semibold text-[var(--muted)] sm:text-xs">
+        {label}
+      </div>
+      <div className="mt-1 truncate text-sm font-extrabold tabular-nums sm:text-lg" style={{ color }}>
+        <span className="sm:hidden">{formatBDTCompact(value)}</span>
+        <span className="hidden sm:inline">{formatBDT(value)}</span>
       </div>
     </div>
   );

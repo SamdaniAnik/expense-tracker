@@ -96,25 +96,25 @@ export default async function MonthsPage({
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <MonthJump month={month} />
-        <Link href={addHref} className="btn btn-primary ml-auto text-sm">
+        <Link href={addHref} className="btn btn-primary ml-auto hidden text-sm sm:inline-flex">
           ＋ Add in {label.split(" ")[0]}
         </Link>
       </div>
 
       <div className="mb-3 grid gap-2.5 sm:grid-cols-2">
-        <div className="card card-hover rise p-4">
+        <div className="card card-hover rise min-w-0 overflow-hidden p-3.5 sm:p-4">
           <p className="text-xs font-semibold text-[var(--muted)]">
             Overall balance (start of month)
           </p>
-          <p className="mt-1 text-2xl font-extrabold tabular-nums">
+          <p className="mt-1 truncate text-xl font-extrabold tabular-nums sm:text-2xl">
             {formatBDT(startingOverall)}
           </p>
-          <p className="mt-1 text-xs text-[var(--faint)]">
+          <p className="mt-1 hidden text-xs text-[var(--faint)] sm:block">
             Same as Excel Overall Balance column
           </p>
         </div>
         <div
-          className="card card-hover rise rise-1 p-4"
+          className="card card-hover rise rise-1 min-w-0 overflow-hidden p-3.5 sm:p-4"
           style={{
             background: "color-mix(in srgb, var(--gold) 14%, var(--surface))",
             borderColor: "color-mix(in srgb, var(--gold) 45%, transparent)",
@@ -123,16 +123,19 @@ export default async function MonthsPage({
           <p className="text-xs font-semibold" style={{ color: "var(--gold)" }}>
             Closing balance
           </p>
-          <p className="mt-1 text-2xl font-extrabold tabular-nums">
+          <p className="mt-1 truncate text-xl font-extrabold tabular-nums sm:text-2xl">
             {formatBDT(closingOverall)}
           </p>
-          <p className="mt-1 text-xs" style={{ color: "color-mix(in srgb, var(--gold) 80%, var(--muted))" }}>
+          <p
+            className="mt-1 hidden text-xs sm:block"
+            style={{ color: "color-mix(in srgb, var(--gold) 80%, var(--muted))" }}
+          >
             Start + Income − Expense
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
         <StatTile label="Income" value={fromCents(incomeP)} tone="income" />
         <StatTile label="Expense" value={fromCents(expenseP)} tone="expense" />
         <StatTile
