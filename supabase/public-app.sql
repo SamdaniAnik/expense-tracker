@@ -134,15 +134,31 @@ create table if not exists public.tour_settlements (
   created_at timestamptz not null default now()
 );
 
+-- Money paid into the shared tour pot (Splitwise-style contributions)
+create table if not exists public.tour_contributions (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid not null references public.tour_groups (id) on delete cascade,
+  member_id uuid not null references public.tour_members (id) on delete cascade,
+  amount numeric(14, 2) not null check (amount > 0),
+  currency text not null default 'BDT',
+  note text,
+  date date not null default current_date,
+  created_by uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists tour_members_group_idx on public.tour_members (group_id);
 create index if not exists tour_expenses_group_idx on public.tour_expenses (group_id, date desc);
 create index if not exists tour_settlements_group_idx on public.tour_settlements (group_id);
+create index if not exists tour_contributions_group_idx
+  on public.tour_contributions (group_id, date desc);
 
 alter table public.tour_groups enable row level security;
 alter table public.tour_members enable row level security;
 alter table public.tour_expenses enable row level security;
 alter table public.tour_shares enable row level security;
 alter table public.tour_settlements enable row level security;
+alter table public.tour_contributions enable row level security;
 
 create or replace function public.is_tour_member(gid uuid)
 returns boolean language sql stable security definer set search_path = public as $$
@@ -204,5 +220,10 @@ create policy "tour_shares_all" on public.tour_shares
 
 drop policy if exists "tour_settlements_all" on public.tour_settlements;
 create policy "tour_settlements_all" on public.tour_settlements
+  for all using (public.is_tour_member(group_id))
+  with check (public.is_tour_member(group_id));
+
+drop policy if exists "tour_contributions_all" on public.tour_contributions;
+create policy "tour_contributions_all" on public.tour_contributions
   for all using (public.is_tour_member(group_id))
   with check (public.is_tour_member(group_id));

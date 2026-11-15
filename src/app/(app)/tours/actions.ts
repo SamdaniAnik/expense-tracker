@@ -130,7 +130,6 @@ export async function addTourExpense(formData: FormData) {
   const amount = Number(String(formData.get("amount") ?? "").replace(/[^0-9.-]/g, ""));
   const split_type = String(formData.get("split_type") ?? "equal") as "equal" | "exact";
   const memberIds = formData.getAll("member_id").map(String);
-  const exactRaw = formData.getAll("exact_amount").map(String);
 
   if (!group_id || !paid_by || !Number.isFinite(amount) || amount <= 0) {
     redirect(`/tours/${group_id}`);
@@ -141,7 +140,8 @@ export async function addTourExpense(formData: FormData) {
     .select("id")
     .eq("group_id", group_id);
   const allIds = (members ?? []).map((m) => m.id as string);
-  const included = memberIds.length ? memberIds.filter((id) => allIds.includes(id)) : allIds;
+  // Only checked people share this expense (e.g. 3 of 7 for one activity ticket)
+  const included = [...new Set(memberIds.filter((id) => allIds.includes(id)))];
   if (!included.length) redirect(`/tours/${group_id}`);
 
   const { data: expense, error } = await supabase
@@ -162,12 +162,15 @@ export async function addTourExpense(formData: FormData) {
 
   let shares: { expense_id: string; member_id: string; owed_amount: number }[] = [];
   if (split_type === "exact") {
-    const amounts = exactRaw.map((v) => Number(String(v).replace(/[^0-9.-]/g, "")) || 0);
-    shares = included.map((member_id, i) => ({
-      expense_id: expense.id,
-      member_id,
-      owed_amount: Math.round((amounts[i] || 0) * 100) / 100,
-    }));
+    shares = included.map((member_id) => {
+      const raw = String(formData.get(`exact_${member_id}`) ?? "").replace(/[^0-9.-]/g, "");
+      const owed = Number(raw) || 0;
+      return {
+        expense_id: expense.id,
+        member_id,
+        owed_amount: Math.round(owed * 100) / 100,
+      };
+    });
   } else {
     const n = included.length;
     const totalP = toPaisa(amount);
@@ -240,6 +243,98 @@ export async function deleteTourExpense(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const group_id = String(formData.get("group_id") ?? "");
   if (id) await supabase.from("tour_expenses").delete().eq("id", id);
+  revalidatePath(`/tours/${group_id}`);
+  redirect(`/tours/${group_id}`);
+}
+
+/** Record money paid into the shared tour pot. */
+export async function addContribution(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const group_id = String(formData.get("group_id") ?? "");
+  const member_id = String(formData.get("member_id") ?? "");
+  const currency = String(formData.get("currency") ?? "BDT").toUpperCase();
+  const note = String(formData.get("note") ?? "").trim() || null;
+  const date = String(formData.get("date") ?? new Date().toISOString().slice(0, 10));
+  const amount = Number(String(formData.get("amount") ?? "").replace(/[^0-9.-]/g, ""));
+
+  if (!group_id || !member_id || !Number.isFinite(amount) || amount <= 0) {
+    redirect(`/tours/${group_id}`);
+  }
+
+  const { error } = await supabase.from("tour_contributions").insert({
+    group_id,
+    member_id,
+    amount,
+    currency,
+    note,
+    date,
+    created_by: user.id,
+  });
+  if (error) {
+    // Table may not exist until tour-contributions.sql is run
+    console.error(error.message);
+  }
+
+  revalidatePath(`/tours/${group_id}`);
+  redirect(`/tours/${group_id}`);
+}
+
+export async function deleteContribution(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const id = String(formData.get("id") ?? "");
+  const group_id = String(formData.get("group_id") ?? "");
+  if (id) await supabase.from("tour_contributions").delete().eq("id", id);
+  revalidatePath(`/tours/${group_id}`);
+  redirect(`/tours/${group_id}`);
+}
+
+/** One-tap settle from suggested settle-up. */
+export async function quickSettle(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const group_id = String(formData.get("group_id") ?? "");
+  const from_member = String(formData.get("from_member") ?? "");
+  const to_member = String(formData.get("to_member") ?? "");
+  const currency = String(formData.get("currency") ?? "BDT").toUpperCase();
+  const amount = Number(String(formData.get("amount") ?? "").replace(/[^0-9.-]/g, ""));
+  const date = new Date().toISOString().slice(0, 10);
+
+  if (
+    !group_id ||
+    !from_member ||
+    !to_member ||
+    from_member === to_member ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    redirect(`/tours/${group_id}`);
+  }
+
+  await supabase.from("tour_settlements").insert({
+    group_id,
+    from_member,
+    to_member,
+    amount,
+    currency,
+    note: "Settle up",
+    date,
+    created_by: user.id,
+  });
+
   revalidatePath(`/tours/${group_id}`);
   redirect(`/tours/${group_id}`);
 }

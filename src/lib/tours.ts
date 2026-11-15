@@ -54,6 +54,18 @@ export interface TourSettlement {
   created_at: string;
 }
 
+export interface TourContribution {
+  id: string;
+  group_id: string;
+  member_id: string;
+  amount: number;
+  currency: string;
+  note: string | null;
+  date: string;
+  created_by: string;
+  created_at: string;
+}
+
 export function inviteCode() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let out = "";
@@ -128,6 +140,58 @@ export async function getTourSettlements(groupId: string): Promise<TourSettlemen
     .eq("group_id", groupId)
     .order("date", { ascending: false });
   return (data ?? []) as TourSettlement[];
+}
+
+export async function getTourContributions(groupId: string): Promise<TourContribution[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("tour_contributions")
+      .select("*")
+      .eq("group_id", groupId)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return (data ?? []) as TourContribution[];
+  } catch {
+    return [];
+  }
+}
+
+/** Per-member paid into the pot + fair share vs equal chip-in. */
+export function computePot(
+  members: TourMember[],
+  contributions: TourContribution[],
+): {
+  total: number;
+  fairShare: number;
+  byMember: Map<string, number>;
+  /** positive = contributed more than fair share */
+  vsFair: Map<string, number>;
+} {
+  const byMember = new Map<string, number>();
+  for (const m of members) byMember.set(m.id, 0);
+  let totalP = 0;
+  for (const c of contributions) {
+    const p = toPaisa(Number(c.amount));
+    totalP += p;
+    byMember.set(c.member_id, (byMember.get(c.member_id) ?? 0) + p);
+  }
+  const n = Math.max(1, members.length);
+  const fairP = Math.round(totalP / n);
+  const vsFair = new Map<string, number>();
+  const byMemberOut = new Map<string, number>();
+  for (const m of members) {
+    const paid = byMember.get(m.id) ?? 0;
+    byMemberOut.set(m.id, fromPaisa(paid));
+    vsFair.set(m.id, fromPaisa(paid - fairP));
+  }
+  return {
+    total: fromPaisa(totalP),
+    fairShare: fromPaisa(fairP),
+    byMember: byMemberOut,
+    vsFair,
+  };
 }
 
 /** Net balance per member in group base currency units (positive = others owe them). */
