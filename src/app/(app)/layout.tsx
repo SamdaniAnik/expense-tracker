@@ -1,10 +1,10 @@
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
+import QuickAddFab from "@/components/QuickAddFab";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh lg:flex">
-      {/* Desktop web: side navigation */}
       <SideNav />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -14,7 +14,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         >
           {children}
         </main>
-        {/* Mobile app: bottom tab bar (hidden on large screens via CSS) */}
+        <QuickAddFab />
         <BottomNav />
       </div>
     </div>

@@ -9,6 +9,8 @@ export type ActivityRow = {
   date: string;
   description: string;
   category: string | null;
+  note?: string | null;
+  tags?: string[];
   account: string;
   type: "income" | "expense";
   amount: number;
@@ -34,7 +36,8 @@ export default function ActivityTable({ rows }: { rows: ActivityRow[] }) {
     {
       id: "description",
       header: "Description",
-      searchText: (r) => `${r.description} ${r.category ?? ""}`,
+      searchText: (r) =>
+        `${r.description} ${r.category ?? ""} ${r.note ?? ""} ${(r.tags ?? []).join(" ")}`,
       sortValue: (r) => r.description,
       cell: (r) => (
         <div className="min-w-0">
@@ -44,10 +47,16 @@ export default function ActivityTable({ rows }: { rows: ActivityRow[] }) {
           >
             {r.description || r.category || "Transaction"}
           </Link>
-          {r.category ? (
-            <div className="mt-0.5">
-              <span className="dt-chip">{r.category}</span>
-            </div>
+          <div className="mt-0.5 flex flex-wrap gap-1">
+            {r.category ? <span className="dt-chip">{r.category}</span> : null}
+            {(r.tags ?? []).map((t) => (
+              <span key={t} className="dt-chip">
+                #{t}
+              </span>
+            ))}
+          </div>
+          {r.note ? (
+            <p className="mt-0.5 truncate text-xs text-[var(--muted)]">{r.note}</p>
           ) : null}
         </div>
       ),

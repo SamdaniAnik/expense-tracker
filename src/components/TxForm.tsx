@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Account, Transaction, TxType } from "@/lib/types";
 import { guessCategory } from "@/lib/categories";
+import { createClient } from "@/lib/supabase/client";
 
 type Result = { error?: string } | void;
 
@@ -20,9 +21,7 @@ export default function TxForm({
   accounts: Account[];
   categories: string[];
   initial?: Transaction;
-  /** Prefill date when creating (e.g. for a specific month ledger). */
   defaultDate?: string;
-  /** Hidden return path after save (e.g. /months?m=2026-11). */
   returnTo?: string;
   onSubmit: (formData: FormData) => Promise<Result>;
   onDelete?: () => Promise<Result>;
@@ -32,6 +31,10 @@ export default function TxForm({
   const [type, setType] = useState<TxType>(initial?.type ?? "expense");
   const [category, setCategory] = useState(initial?.category ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [note, setNote] = useState(initial?.note ?? "");
+  const [tags, setTags] = useState((initial?.tags ?? []).join(", "));
+  const [receiptPath, setReceiptPath] = useState(initial?.receipt_path ?? "");
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -40,6 +43,9 @@ export default function TxForm({
 
   function handleSubmit(formData: FormData) {
     formData.set("type", type);
+    formData.set("note", note);
+    formData.set("tags", tags);
+    if (receiptPath) formData.set("receipt_path", receiptPath);
     setError(null);
     startTransition(async () => {
       const res = await onSubmit(formData);
@@ -51,10 +57,36 @@ export default function TxForm({
     if (!category && description) setCategory(guessCategory(description));
   }
 
+  async function onReceiptChange(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sign in required to upload.");
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("receipts").upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (upErr) throw upErr;
+      setReceiptPath(path);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <form action={handleSubmit} className="card rise space-y-4 p-5 sm:max-w-xl">
       {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
-      {/* income / expense toggle */}
+      <input type="hidden" name="receipt_path" value={receiptPath} />
+
       <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[var(--surface-2)] p-1">
         <button
           type="button"
@@ -63,7 +95,10 @@ export default function TxForm({
           style={{
             background: type === "expense" ? "var(--expense)" : "transparent",
             color: type === "expense" ? "#fff" : "var(--muted)",
-            boxShadow: type === "expense" ? "0 4px 12px -4px color-mix(in srgb, var(--expense) 60%, transparent)" : "none",
+            boxShadow:
+              type === "expense"
+                ? "0 4px 12px -4px color-mix(in srgb, var(--expense) 60%, transparent)"
+                : "none",
           }}
         >
           Expense
@@ -75,7 +110,10 @@ export default function TxForm({
           style={{
             background: type === "income" ? "var(--income)" : "transparent",
             color: type === "income" ? "#fff" : "var(--muted)",
-            boxShadow: type === "income" ? "0 4px 12px -4px color-mix(in srgb, var(--income) 60%, transparent)" : "none",
+            boxShadow:
+              type === "income"
+                ? "0 4px 12px -4px color-mix(in srgb, var(--income) 60%, transparent)"
+                : "none",
           }}
         >
           Income
@@ -83,7 +121,9 @@ export default function TxForm({
       </div>
 
       <div>
-        <label className="label" htmlFor="amount">Amount (৳)</label>
+        <label className="label" htmlFor="amount">
+          Amount (৳)
+        </label>
         <input
           id="amount"
           name="amount"
@@ -99,21 +139,35 @@ export default function TxForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label" htmlFor="account_id">Account</label>
-          <select id="account_id" name="account_id" defaultValue={initial?.account_id ?? accounts[0]?.id} className="input" required>
+          <label className="label" htmlFor="account_id">
+            Account
+          </label>
+          <select
+            id="account_id"
+            name="account_id"
+            defaultValue={initial?.account_id ?? accounts[0]?.id}
+            className="input"
+            required
+          >
             {accounts.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="label" htmlFor="date">Date</label>
+          <label className="label" htmlFor="date">
+            Date
+          </label>
           <input id="date" name="date" type="date" defaultValue={dateValue} className="input" required />
         </div>
       </div>
 
       <div>
-        <label className="label" htmlFor="description">Description</label>
+        <label className="label" htmlFor="description">
+          Description
+        </label>
         <input
           id="description"
           name="description"
@@ -127,7 +181,9 @@ export default function TxForm({
       </div>
 
       <div>
-        <label className="label" htmlFor="category">Category</label>
+        <label className="label" htmlFor="category">
+          Category
+        </label>
         <input
           id="category"
           name="category"
@@ -144,13 +200,64 @@ export default function TxForm({
         </datalist>
       </div>
 
+      <div>
+        <label className="label" htmlFor="tags">
+          Tags
+        </label>
+        <input
+          id="tags"
+          name="tags"
+          type="text"
+          placeholder="comma separated · e.g. office, trip"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          className="input"
+        />
+      </div>
+
+      <div>
+        <label className="label" htmlFor="note">
+          Note
+        </label>
+        <textarea
+          id="note"
+          name="note"
+          rows={2}
+          placeholder="Optional details"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="input"
+        />
+      </div>
+
+      <div>
+        <label className="label" htmlFor="receipt">
+          Receipt
+        </label>
+        <input
+          id="receipt"
+          type="file"
+          accept="image/*,application/pdf"
+          className="input"
+          onChange={(e) => onReceiptChange(e.target.files?.[0] ?? null)}
+          disabled={uploading}
+        />
+        {uploading ? (
+          <p className="mt-1 text-xs text-[var(--muted)]">Uploading…</p>
+        ) : receiptPath ? (
+          <p className="mt-1 text-xs text-[var(--income)]">Attached · {receiptPath.split("/").pop()}</p>
+        ) : (
+          <p className="mt-1 text-xs text-[var(--muted)]">Image or PDF (needs receipts bucket)</p>
+        )}
+      </div>
+
       {error && <p className="text-sm text-[var(--expense)]">{error}</p>}
 
       <div className="flex gap-3 pt-1">
         <button type="button" onClick={() => router.back()} className="btn btn-ghost flex-1">
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary flex-[2]" disabled={pending}>
+        <button type="submit" className="btn btn-primary flex-[2]" disabled={pending || uploading}>
           {pending ? "Saving…" : submitLabel}
         </button>
       </div>

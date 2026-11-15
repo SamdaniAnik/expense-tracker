@@ -64,6 +64,22 @@ export default async function AccountsPage() {
         </>
       )}
 
+      <SectionTitle>Tools</SectionTitle>
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {[
+          ["/budgets", "Budgets"],
+          ["/transfer", "Transfer"],
+          ["/recurring", "Recurring"],
+          ["/debts", "Loans"],
+          ["/household", "Household"],
+          ["/backup", "Backup"],
+        ].map(([href, label]) => (
+          <a key={href} href={href} className="card card-hover px-3 py-3 text-center text-sm font-semibold">
+            {label}
+          </a>
+        ))}
+      </div>
+
       <SectionTitle>Session</SectionTitle>
       <SignOutButton />
       <p className="mt-6 text-center text-xs text-[var(--muted)]">Paisa · your private money tracker</p>

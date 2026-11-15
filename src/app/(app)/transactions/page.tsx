@@ -48,6 +48,8 @@ export default async function TransactionsPage({
             date: t.date,
             description: t.description || "",
             category: t.category,
+            note: t.note,
+            tags: t.tags ?? [],
             account: accountName.get(t.account_id) ?? "—",
             type: t.type,
             amount: Number(t.amount),

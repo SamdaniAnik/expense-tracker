@@ -64,6 +64,7 @@ export default async function InsightsPage({
   let yearExpenseP = 0;
 
   for (const t of yearTxns) {
+    if (t.is_transfer) continue;
     const k = monthKey(t.date);
     const p = toPaisa(t.amount);
     if (t.type === "income") {

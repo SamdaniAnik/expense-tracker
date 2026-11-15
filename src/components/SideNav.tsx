@@ -33,6 +33,15 @@ const items = [
   },
 ];
 
+const more = [
+  { href: "/budgets", label: "Budgets" },
+  { href: "/transfer", label: "Transfer" },
+  { href: "/recurring", label: "Recurring" },
+  { href: "/debts", label: "Loans & debts" },
+  { href: "/household", label: "Household" },
+  { href: "/backup", label: "Backup" },
+];
+
 export default function SideNav() {
   const pathname = usePathname();
   const now = new Date();
@@ -53,7 +62,7 @@ export default function SideNav() {
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
         {items.map(({ href, label, Icon, match }) => {
           const active = match(pathname);
           return (
@@ -78,16 +87,32 @@ export default function SideNav() {
             </Link>
           );
         })}
+
+        <p className="mb-1 mt-5 px-3 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--faint)]">
+          More
+        </p>
+        {more.map(({ href, label }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-xl px-3 py-2 text-sm font-semibold transition-colors hover:bg-[var(--surface-2)]"
+              style={{
+                background: active ? "var(--surface-2)" : "transparent",
+                color: active ? "var(--primary)" : "var(--muted)",
+              }}
+            >
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
-      <Link
-        href={`/add?m=${month}`}
-        className="btn btn-primary mb-3 w-full"
-      >
-        <PlusIcon width={18} height={18} />
-        Add transaction
-      </Link>
-      <div className="px-1">
+      <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-4">
+        <Link href={`/add?m=${month}`} className="btn btn-primary w-full text-sm">
+          <PlusIcon width={16} height={16} /> Add
+        </Link>
         <SignOutButton />
       </div>
     </aside>

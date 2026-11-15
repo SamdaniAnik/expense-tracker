@@ -45,7 +45,7 @@ export default function TxFilters({ accounts }: { accounts: Account[] }) {
         </span>
         <input
           type="search"
-          placeholder="Server search · description…"
+          placeholder="Search description, note, category…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="input pl-9"

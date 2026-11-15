@@ -11,6 +11,15 @@ function bustTxCache(userId: string) {
   revalidatePath("/months");
   revalidatePath("/insights");
   revalidatePath("/accounts");
+  revalidatePath("/budgets");
+}
+
+function parseTags(raw: string): string[] {
+  return raw
+    .split(/[,#]/)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 20);
 }
 
 function parseForm(formData: FormData) {
@@ -25,6 +34,8 @@ function parseForm(formData: FormData) {
     description: String(formData.get("description") ?? "").trim(),
     category: (String(formData.get("category") ?? "").trim() || null) as string | null,
     note: (String(formData.get("note") ?? "").trim() || null) as string | null,
+    tags: parseTags(String(formData.get("tags") ?? "")),
+    receipt_path: (String(formData.get("receipt_path") ?? "").trim() || null) as string | null,
   };
 }
 
@@ -47,8 +58,30 @@ export async function createTx(formData: FormData) {
   const err = validate(v);
   if (err) return { error: err };
 
-  const { error } = await supabase.from("transactions").insert({ ...v, user_id: user.id });
-  if (error) return { error: error.message };
+  // Attach household_id if user is in one (owner's shared data)
+  const { data: membership } = await supabase
+    .from("household_members")
+    .select("household_id, role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const { error } = await supabase.from("transactions").insert({
+    ...v,
+    user_id: user.id,
+    household_id: membership?.household_id ?? null,
+  });
+  if (error) {
+    // Fallback if new columns not migrated yet
+    if (error.message.includes("tags") || error.message.includes("receipt_path") || error.message.includes("household_id")) {
+      const { tags: _t, receipt_path: _r, ...legacy } = v;
+      const { error: e2 } = await supabase
+        .from("transactions")
+        .insert({ ...legacy, user_id: user.id });
+      if (e2) return { error: e2.message };
+    } else {
+      return { error: error.message };
+    }
+  }
 
   const returnTo = String(formData.get("return_to") ?? "").trim();
   bustTxCache(user.id);
@@ -67,7 +100,15 @@ export async function updateTx(id: string, formData: FormData) {
   if (err) return { error: err };
 
   const { error } = await supabase.from("transactions").update(v).eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.message.includes("tags") || error.message.includes("receipt_path")) {
+      const { tags: _t, receipt_path: _r, ...legacy } = v;
+      const { error: e2 } = await supabase.from("transactions").update(legacy).eq("id", id);
+      if (e2) return { error: e2.message };
+    } else {
+      return { error: error.message };
+    }
+  }
 
   bustTxCache(user.id);
   const month = v.date.slice(0, 7);

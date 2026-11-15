@@ -4,9 +4,34 @@ import { excelMonthSummary } from "@/lib/balances";
 import { getExcelMonthSummary, getExcelYears } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
 import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
+import { getBudgets, budgetProgress } from "@/lib/budgets";
+import { applyDueRecurring } from "@/lib/recurring";
 import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 import HomeMonthPicker from "@/components/HomeMonthPicker";
+import MonthCompare from "@/components/MonthCompare";
 import type { Account, Transaction } from "@/lib/types";
+
+function shiftYm(ym: string, delta: number) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthFlow(txns: Transaction[]) {
+  let incomeP = 0;
+  let expenseP = 0;
+  for (const t of txns) {
+    if (t.is_transfer) continue;
+    const p = toPaisa(Number(t.amount));
+    if (t.type === "income") incomeP += p;
+    else expenseP += p;
+  }
+  return {
+    income: fromPaisa(incomeP),
+    expense: fromPaisa(expenseP),
+    net: fromPaisa(incomeP - expenseP),
+  };
+}
 
 /** End-of-month balance without loading full history when Excel openings exist. */
 function monthEndBalance(
@@ -33,12 +58,17 @@ export default async function DashboardPage({
   const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const ym = sp.m && /^\d{4}-\d{2}$/.test(sp.m) ? sp.m : fallback;
 
+  // Soft-apply recurring rules when visiting home (idempotent)
+  await applyDueRecurring().catch(() => 0);
+
+  const prevYm = shiftYm(ym, -1);
   const sheet = getExcelMonthSummary(ym);
-  // Fast path: this month only. If no Excel opening snapshot, also load prior rows once.
-  const [accounts, monthTxns, priorTxns] = await Promise.all([
+  const [accounts, monthTxns, priorTxns, prevTxns, budgets] = await Promise.all([
     getAccounts(),
     getTransactions({ month: ym, lean: true }),
     sheet ? Promise.resolve([]) : getTransactionsBefore(`${ym}-01`),
+    getTransactions({ month: prevYm, lean: true }),
+    getBudgets(),
   ]);
 
   const active = accounts.filter((a) => !a.archived);
@@ -58,8 +88,15 @@ export default async function DashboardPage({
     month: "long",
     year: "numeric",
   });
+  const prevLabel = new Date(prevYm + "-01T00:00:00").toLocaleDateString("en-GB", {
+    month: "short",
+    year: "numeric",
+  });
   const years = getExcelYears();
   const addHref = `/add?m=${ym}`;
+  const compareCurrent = monthFlow(monthTxns);
+  const comparePrev = monthFlow(prevTxns);
+  const budgetsNow = budgetProgress(budgets, monthTxns, ym).slice(0, 4);
 
   return (
     <div className="pb-2">
@@ -140,6 +177,55 @@ export default async function DashboardPage({
               <p className="text-[0.65rem] text-[var(--faint)]">start of month</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="mb-6 grid gap-3 lg:grid-cols-2">
+        <MonthCompare
+          currentLabel={monthLabel}
+          prevLabel={prevLabel}
+          current={compareCurrent}
+          previous={comparePrev}
+        />
+        <div className="card p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
+              Budgets
+            </p>
+            <Link href="/budgets" className="text-xs font-semibold text-[var(--primary)]">
+              Manage
+            </Link>
+          </div>
+          {budgetsNow.length === 0 ? (
+            <p className="text-sm text-[var(--muted)]">
+              No budgets yet.{" "}
+              <Link href="/budgets" className="font-semibold text-[var(--primary)]">
+                Set a limit
+              </Link>
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {budgetsNow.map(({ budget, spent, pct, remaining }) => (
+                <div key={budget.id}>
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="font-semibold">{budget.category}</span>
+                    <span className="tabular-nums text-[var(--muted)]">
+                      {formatBDT(spent)} / {formatBDT(Number(budget.amount))}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, pct)}%`,
+                        background: remaining < 0 ? "var(--expense)" : "var(--primary)",
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
