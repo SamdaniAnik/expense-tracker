@@ -22,3 +22,15 @@ const MAP = summaries as SummaryMap;
 export function getExcelMonthSummary(ym: string): MonthSummary | null {
   return MAP[ym] ?? null;
 }
+
+/** Years present in the imported Excel summaries (newest first). */
+export function getExcelYears(): number[] {
+  const years = new Set<number>();
+  for (const ym of Object.keys(MAP)) {
+    const y = Number(ym.slice(0, 4));
+    if (Number.isFinite(y)) years.add(y);
+  }
+  const nowY = new Date().getFullYear();
+  years.add(nowY);
+  return [...years].sort((a, b) => b - a);
+}
