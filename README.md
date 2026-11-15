@@ -70,9 +70,33 @@ edit or delete individual imported rows right in the app.
    Vercel — the import runs locally).
 4. Deploy. Open the URL, sign in, and on your phone use **Share → Add to Home
    Screen** (iOS) or the install prompt (Android) to install the app.
+5. Optional: set `NEXT_PUBLIC_APP_URL` to the production URL (used by the
+   Android Capacitor shell).
+
+## 6. Google Play Store (Android)
+
+The repo includes a Capacitor Android project (`android/`, app id
+`com.samdanianik.ledger`) that loads the live site in a native WebView.
+
+1. Create a **Google Play Developer** account ($25) at
+   [play.google.com/console](https://play.google.com/console).
+2. Install **Android Studio**, then from this repo (Node 22+):
+
+   ```bash
+   npm install
+   npm run cap:sync
+   npm run android:open
+   ```
+
+3. In Android Studio: **Build → Generate Signed App Bundle** (AAB). Keep the
+   keystore safe.
+4. Upload the AAB to an **internal testing** track, then production.
+5. Privacy policy URL: `https://personal-costing-app.vercel.app/privacy`
+
+Full checklist: [`docs/play-store.md`](docs/play-store.md).
 
 ## Stack
 
 Next.js 16 (App Router, TypeScript) · Tailwind CSS v4 · Supabase (Postgres +
-Auth + RLS) · Recharts · Vitest. Design & plan live in
+Auth + RLS) · Capacitor (Android) · Recharts · Vitest. Design & plan live in
 [`docs/superpowers/`](docs/superpowers/).
