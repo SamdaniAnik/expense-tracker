@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, ListIcon, ChartIcon, WalletIcon, PlusIcon } from "./icons";
+import { HomeIcon, ListIcon, GiftIcon, WalletIcon, PlusIcon } from "./icons";
 
 const items = [
   { href: "/", label: "Home", Icon: HomeIcon, match: (p: string) => p === "/" },
   { href: "/months", label: "Months", Icon: ListIcon, match: (p: string) => p.startsWith("/months") || p.startsWith("/transactions") },
-  { href: "/insights", label: "Reports", Icon: ChartIcon, match: (p: string) => p.startsWith("/insights") },
+  { href: "/gifts", label: "Gifts", Icon: GiftIcon, match: (p: string) => p.startsWith("/gifts") },
   { href: "/accounts", label: "Accounts", Icon: WalletIcon, match: (p: string) => p.startsWith("/accounts") },
 ];
 

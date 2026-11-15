@@ -500,7 +500,95 @@ async function main() {
     console.log(`  inserted ${Math.min(i + CHUNK, rows.length)}/${rows.length}`);
   }
 
+  // ---------- Gift lists (Biyer / Babur) ----------
+  const gifts = extractGiftSheets(buf);
+  const { error: giftDelErr } = await supabase
+    .from("gift_entries")
+    .delete()
+    .eq("user_id", userId!);
+  if (giftDelErr) {
+    console.warn(
+      `\n⚠ gift_entries table missing or blocked (${giftDelErr.message}).\n` +
+        `  Run supabase/gifts.sql in the Supabase SQL editor, then re-run npm run seed:google.\n`,
+    );
+  } else if (gifts.length) {
+    const { error: giftInsErr } = await supabase.from("gift_entries").insert(
+      gifts.map((g) => ({ ...g, user_id: userId! })),
+    );
+    if (giftInsErr) die(`Gift insert failed: ${giftInsErr.message}`);
+    console.log(
+      `  gifts: ${gifts.filter((g) => g.list === "biyer").length} Biyer, ` +
+        `${gifts.filter((g) => g.list === "babur").length} Babur`,
+    );
+  }
+
   console.log("\n✓ Google Sheet import complete.\n");
+}
+
+type GiftRow = {
+  list: "biyer" | "babur";
+  name: string;
+  amount: number | null;
+  item: string | null;
+  kind: "gift" | "meta";
+  sort_order: number;
+};
+
+function extractGiftSheets(buf: Buffer): GiftRow[] {
+  const wb = XLSX.read(buf, { type: "buffer", cellDates: false });
+  const out: GiftRow[] = [];
+  const sheets: { name: string; list: "biyer" | "babur" }[] = [
+    { name: "Biyer Gift", list: "biyer" },
+    { name: "Babur Gift", list: "babur" },
+  ];
+
+  for (const { name, list } of sheets) {
+    const sheet = wb.Sheets[name];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json<(string | number)[]>(sheet, {
+      header: 1,
+      defval: "",
+      raw: false,
+    });
+    let order = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r) continue;
+      const nameCell = String(r[0] ?? "").trim();
+      const col1 = String(r[1] ?? "").trim();
+      const col2 = String(r[2] ?? "").trim();
+      if (!nameCell || /^name$/i.test(nameCell)) continue;
+
+      const a1 = parseMoney(col1);
+      const a2 = parseMoney(col2);
+      let amount: number | null = null;
+      let item: string | null = null;
+      if (Number.isFinite(a1) && a1 > 0) {
+        amount = a1;
+        if (col2 && !Number.isFinite(a2)) item = col2;
+      } else if (Number.isFinite(a2) && a2 > 0) {
+        amount = a2;
+      } else if (col2) {
+        item = col2;
+      } else if (col1 && !Number.isFinite(a1)) {
+        item = col1;
+      }
+
+      const kind: "gift" | "meta" = /total|grand|venue/i.test(nameCell)
+        ? "meta"
+        : "gift";
+
+      out.push({
+        list,
+        name: nameCell,
+        amount,
+        item,
+        kind,
+        sort_order: order++,
+      });
+    }
+  }
+  return out;
 }
 
 main().catch((e) => die(String(e)));

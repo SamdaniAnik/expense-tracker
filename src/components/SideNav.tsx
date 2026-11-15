@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, ListIcon, ChartIcon, WalletIcon, PlusIcon } from "./icons";
+import { HomeIcon, ListIcon, ChartIcon, WalletIcon, PlusIcon, GiftIcon } from "./icons";
 import SignOutButton from "./SignOutButton";
 
 const items = [
@@ -12,6 +12,12 @@ const items = [
     label: "Months",
     Icon: ListIcon,
     match: (p: string) => p.startsWith("/months") || p.startsWith("/transactions"),
+  },
+  {
+    href: "/gifts",
+    label: "Gifts",
+    Icon: GiftIcon,
+    match: (p: string) => p.startsWith("/gifts"),
   },
   {
     href: "/insights",

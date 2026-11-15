@@ -62,3 +62,12 @@ export function CalendarIcon(p: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+export function GiftIcon(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...p}>
+      <path d="M12 8v13M4.5 12.5h15" />
+      <path d="M20 12.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20v-7.5" />
+      <path d="M7.5 8.5c0-2 1.5-3.5 3.5-3.5 1.2 0 2 .6 2.5 1.5.5-.9 1.3-1.5 2.5-1.5 2 0 3.5 1.5 3.5 3.5v1H7.5v-1z" />
+    </svg>
+  );
+}
