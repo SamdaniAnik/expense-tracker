@@ -82,7 +82,7 @@ export default async function AccountsPage() {
 
       <SectionTitle>Session</SectionTitle>
       <SignOutButton />
-      <p className="mt-6 text-center text-xs text-[var(--muted)]">Paisa · your private money tracker</p>
+      <p className="mt-6 text-center text-xs text-[var(--muted)]">Ledger · your private money tracker</p>
     </div>
   );
 }

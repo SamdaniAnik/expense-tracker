@@ -61,8 +61,8 @@ export default function SideNav({ isAdmin = false }: { isAdmin?: boolean }) {
           ৳
         </span>
         <div>
-          <p className="font-display text-lg font-extrabold leading-none tracking-tight">Paisa</p>
-          <p className="mt-1 text-xs text-[var(--muted)]">Personal finance</p>
+          <p className="font-display text-lg font-extrabold leading-none tracking-tight">Ledger</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">Money & tours</p>
         </div>
       </div>
 

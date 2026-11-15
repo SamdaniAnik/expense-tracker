@@ -1,9 +1,9 @@
 import type { Account, Transaction } from "./types";
-import { toPaisa, fromPaisa } from "./money";
+import { toCents, fromCents } from "./money";
 
-/** Signed paisa delta of a transaction: income adds, expense subtracts. */
-function signedPaisa(t: Pick<Transaction, "type" | "amount">): number {
-  const p = toPaisa(t.amount);
+/** Signed cents delta of a transaction: income adds, expense subtracts. */
+function signedCents(t: Pick<Transaction, "type" | "amount">): number {
+  const p = toCents(t.amount);
   return t.type === "income" ? p : -p;
 }
 
@@ -13,11 +13,11 @@ export function accountBalance(
   account: Pick<Account, "id" | "opening_balance">,
   txns: Pick<Transaction, "account_id" | "type" | "amount">[],
 ): number {
-  let paisa = toPaisa(account.opening_balance);
+  let cents = toCents(account.opening_balance);
   for (const t of txns) {
-    if (t.account_id === account.id) paisa += signedPaisa(t);
+    if (t.account_id === account.id) cents += signedCents(t);
   }
-  return fromPaisa(paisa);
+  return fromCents(cents);
 }
 
 /** Sum of every account's balance. */
@@ -25,9 +25,9 @@ export function overallBalance(
   accounts: Pick<Account, "id" | "opening_balance">[],
   txns: Pick<Transaction, "account_id" | "type" | "amount">[],
 ): number {
-  let paisa = 0;
-  for (const a of accounts) paisa += toPaisa(accountBalance(a, txns));
-  return fromPaisa(paisa);
+  let cents = 0;
+  for (const a of accounts) cents += toCents(accountBalance(a, txns));
+  return fromCents(cents);
 }
 
 export interface MonthTotals {
@@ -47,12 +47,12 @@ export function monthTotals(
   const prefix = `${year}-${String(month).padStart(2, "0")}`;
   for (const t of txns) {
     if (!t.date.startsWith(prefix)) continue;
-    if (t.type === "income") incomeP += toPaisa(t.amount);
-    else expenseP += toPaisa(t.amount);
+    if (t.type === "income") incomeP += toCents(t.amount);
+    else expenseP += toCents(t.amount);
   }
-  const income = fromPaisa(incomeP);
-  const expense = fromPaisa(expenseP);
-  return { income, expense, net: fromPaisa(incomeP - expenseP) };
+  const income = fromCents(incomeP);
+  const expense = fromCents(expenseP);
+  return { income, expense, net: fromCents(incomeP - expenseP) };
 }
 
 /** Total income and expense across all transactions. */
@@ -62,13 +62,13 @@ export function totals(
   let incomeP = 0;
   let expenseP = 0;
   for (const t of txns) {
-    if (t.type === "income") incomeP += toPaisa(t.amount);
-    else expenseP += toPaisa(t.amount);
+    if (t.type === "income") incomeP += toCents(t.amount);
+    else expenseP += toCents(t.amount);
   }
   return {
-    income: fromPaisa(incomeP),
-    expense: fromPaisa(expenseP),
-    net: fromPaisa(incomeP - expenseP),
+    income: fromCents(incomeP),
+    expense: fromCents(expenseP),
+    net: fromCents(incomeP - expenseP),
   };
 }
 
@@ -92,15 +92,15 @@ export function overallBalanceAsOf(
   txns: Pick<Transaction, "account_id" | "type" | "amount" | "date">[],
   asOfDate: string,
 ): number {
-  let paisa = 0;
+  let cents = 0;
   for (const a of accounts) {
     if (a.opening_date > asOfDate) continue;
-    paisa += toPaisa(a.opening_balance);
+    cents += toCents(a.opening_balance);
   }
   for (const t of txns) {
-    if (t.date <= asOfDate) paisa += signedPaisa(t);
+    if (t.date <= asOfDate) cents += signedCents(t);
   }
-  return fromPaisa(paisa);
+  return fromCents(cents);
 }
 
 /** Balance of one account as of a date (inclusive). */
@@ -110,27 +110,27 @@ export function accountBalanceAsOf(
   asOfDate: string,
 ): number {
   if (account.opening_date > asOfDate) return 0;
-  let paisa = toPaisa(account.opening_balance);
+  let cents = toCents(account.opening_balance);
   for (const t of txns) {
     if (t.account_id === account.id && t.date <= asOfDate) {
-      paisa += signedPaisa(t);
+      cents += signedCents(t);
     }
   }
-  return fromPaisa(paisa);
+  return fromCents(cents);
 }
 
 /**
  * Excel-style running overall balance through ordered rows.
- * `startPaisa` is the overall balance *before* the first row.
+ * `startCents` is the overall balance *before* the first row.
  */
 export function runningOverallBalances(
-  startPaisa: number,
+  startCents: number,
   txns: Pick<Transaction, "type" | "amount">[],
 ): number[] {
-  let paisa = startPaisa;
+  let cents = startCents;
   return txns.map((t) => {
-    paisa += signedPaisa(t);
-    return fromPaisa(paisa);
+    cents += signedCents(t);
+    return fromCents(cents);
   });
 }
 
@@ -141,14 +141,14 @@ export function monthOpeningOverall(
   ym: string,
 ): number {
   const monthStart = `${ym}-01`;
-  let paisa = 0;
+  let cents = 0;
   for (const a of accounts) {
-    if (a.opening_date <= monthStart) paisa += toPaisa(a.opening_balance);
+    if (a.opening_date <= monthStart) cents += toCents(a.opening_balance);
   }
   for (const t of txns) {
-    if (t.date < monthStart) paisa += signedPaisa(t);
+    if (t.date < monthStart) cents += signedCents(t);
   }
-  return fromPaisa(paisa);
+  return fromCents(cents);
 }
 
 /**
@@ -172,13 +172,13 @@ export function excelMonthSummary(
     const income = computed.income || sheet.income;
     const expense = computed.expense || sheet.expense;
     const opening = sheet.opening;
-    const closing = fromPaisa(toPaisa(opening) + toPaisa(income) - toPaisa(expense));
+    const closing = fromCents(toCents(opening) + toCents(income) - toCents(expense));
     return { opening, income, expense, closing, source: "excel" };
   }
 
   const opening = monthOpeningOverall(accounts, txns, ym);
-  const closing = fromPaisa(
-    toPaisa(opening) + toPaisa(computed.income) - toPaisa(computed.expense),
+  const closing = fromCents(
+    toCents(opening) + toCents(computed.income) - toCents(computed.expense),
   );
   return {
     opening,

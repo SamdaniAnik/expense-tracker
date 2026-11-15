@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAccounts, getTransactions, getTransactionsBefore } from "@/lib/data";
-import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
+import { formatBDT, toCents, fromCents } from "@/lib/money";
 import { accountBalanceAsOf, excelMonthSummary } from "@/lib/balances";
 import { getExcelMonthSummary } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
@@ -54,8 +54,8 @@ export default async function MonthsPage({
   );
   const startingOverall = summary.opening;
   const closingOverall = summary.closing;
-  const incomeP = toPaisa(summary.income);
-  const expenseP = toPaisa(summary.expense);
+  const incomeP = toCents(summary.income);
+  const expenseP = toCents(summary.expense);
 
   const beginRows = active
     .filter((a) => a.opening_date <= monthStart || sheet?.accounts?.[accountKeyFromName(a.name)])
@@ -133,11 +133,11 @@ export default async function MonthsPage({
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
-        <StatTile label="Income" value={fromPaisa(incomeP)} tone="income" />
-        <StatTile label="Expense" value={fromPaisa(expenseP)} tone="expense" />
+        <StatTile label="Income" value={fromCents(incomeP)} tone="income" />
+        <StatTile label="Expense" value={fromCents(expenseP)} tone="expense" />
         <StatTile
           label="Net"
-          value={fromPaisa(incomeP - expenseP)}
+          value={fromCents(incomeP - expenseP)}
           tone={incomeP - expenseP < 0 ? "expense" : "income"}
         />
       </div>
@@ -174,8 +174,8 @@ export default async function MonthsPage({
             account: account.name,
             balance,
           }))}
-          incomeTotal={fromPaisa(incomeP)}
-          expenseTotal={fromPaisa(expenseP)}
+          incomeTotal={fromCents(incomeP)}
+          expenseTotal={fromCents(expenseP)}
           startingOverall={startingOverall}
           closingOverall={closingOverall}
         />

@@ -86,7 +86,7 @@ export default function LoginPage() {
           >
             ৳
           </div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight">Paisa</h1>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight">Ledger</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Track spending, split tours, multi-currency
           </p>

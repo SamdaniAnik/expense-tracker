@@ -1,18 +1,18 @@
-/** Money helpers. Amounts are stored as decimal BDT but summed via integer
- * paisa (1/100) to avoid floating-point drift. */
+/** Money helpers. Amounts are stored as decimals but summed via integer
+ * cents (1/100) to avoid floating-point drift. */
 
-export function toPaisa(amount: number): number {
+export function toCents(amount: number): number {
   return Math.round(amount * 100);
 }
 
-export function fromPaisa(paisa: number): number {
-  return paisa / 100;
+export function fromCents(cents: number): number {
+  return cents / 100;
 }
 
 /** Sum a list of decimal amounts without float drift. */
 export function sumAmounts(amounts: number[]): number {
-  const total = amounts.reduce((acc, n) => acc + toPaisa(n), 0);
-  return fromPaisa(total);
+  const total = amounts.reduce((acc, n) => acc + toCents(n), 0);
+  return fromCents(total);
 }
 
 const bdt = new Intl.NumberFormat("en-US", {

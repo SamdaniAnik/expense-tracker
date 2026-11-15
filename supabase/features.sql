@@ -1,4 +1,4 @@
--- Paisa feature pack — run once in Supabase SQL editor after schema.sql
+-- Ledger feature pack — run once in Supabase SQL editor after schema.sql
 -- Covers: budgets, recurring, transfers, receipts, debts, tags, household
 
 -- ---------- Extend transactions ----------

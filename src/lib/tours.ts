@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { toPaisa, fromPaisa } from "@/lib/money";
+import { toCents, fromCents } from "@/lib/money";
 
 export interface TourGroup {
   id: string;
@@ -173,7 +173,7 @@ export function computePot(
   for (const m of members) byMember.set(m.id, 0);
   let totalP = 0;
   for (const c of contributions) {
-    const p = toPaisa(Number(c.amount));
+    const p = toCents(Number(c.amount));
     totalP += p;
     byMember.set(c.member_id, (byMember.get(c.member_id) ?? 0) + p);
   }
@@ -183,12 +183,12 @@ export function computePot(
   const byMemberOut = new Map<string, number>();
   for (const m of members) {
     const paid = byMember.get(m.id) ?? 0;
-    byMemberOut.set(m.id, fromPaisa(paid));
-    vsFair.set(m.id, fromPaisa(paid - fairP));
+    byMemberOut.set(m.id, fromCents(paid));
+    vsFair.set(m.id, fromCents(paid - fairP));
   }
   return {
-    total: fromPaisa(totalP),
-    fairShare: fromPaisa(fairP),
+    total: fromCents(totalP),
+    fairShare: fromCents(fairP),
     byMember: byMemberOut,
     vsFair,
   };
@@ -212,22 +212,22 @@ export function computeBalances(
   }
 
   for (const e of expenses) {
-    const paid = toPaisa(Number(e.amount));
+    const paid = toCents(Number(e.amount));
     bal.set(e.paid_by, (bal.get(e.paid_by) ?? 0) + paid);
     for (const s of sharesByExpense.get(e.id) ?? []) {
-      bal.set(s.member_id, (bal.get(s.member_id) ?? 0) - toPaisa(Number(s.owed_amount)));
+      bal.set(s.member_id, (bal.get(s.member_id) ?? 0) - toCents(Number(s.owed_amount)));
     }
   }
 
   for (const s of settlements) {
-    const amt = toPaisa(Number(s.amount));
+    const amt = toCents(Number(s.amount));
     // from pays to → from's debt decreases (balance up), to's credit decreases (balance down)
     bal.set(s.from_member, (bal.get(s.from_member) ?? 0) + amt);
     bal.set(s.to_member, (bal.get(s.to_member) ?? 0) - amt);
   }
 
   const out = new Map<string, number>();
-  for (const [id, p] of bal) out.set(id, fromPaisa(p));
+  for (const [id, p] of bal) out.set(id, fromCents(p));
   return out;
 }
 

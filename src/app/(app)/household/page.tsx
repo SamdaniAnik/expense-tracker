@@ -36,7 +36,7 @@ export default async function HouseholdPage() {
               {household.invite_code}
             </p>
             <p className="mt-2 text-xs text-[var(--muted)]">
-              Share this code. The other person must already have a Paisa login.
+              Share this code. The other person must already have a Ledger login.
             </p>
           </div>
           {role === "owner" ? (

@@ -1,4 +1,4 @@
-# Paisa — Personal Finance Tracker
+# Ledger — Personal Finance Tracker
 
 A private, mobile-first income & expense tracker (installable PWA) for a single
 user. Built with Next.js + Supabase, deploys to Vercel. Seeded best-effort with

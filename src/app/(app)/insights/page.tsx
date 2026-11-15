@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAccounts, getTransactionsInRange } from "@/lib/data";
-import { toPaisa, fromPaisa, formatBDT } from "@/lib/money";
+import { toCents, fromCents, formatBDT } from "@/lib/money";
 import { Empty, SectionTitle, StatTile } from "@/components/ui";
 import { BalanceLine, IncomeExpenseBars, CategoryBars } from "@/components/charts/Charts";
 import { AccountFlowTable, NamedValueTable } from "@/components/SimpleDataTable";
@@ -21,7 +21,7 @@ function sumYear(txns: Transaction[]) {
   let incomeP = 0;
   let expenseP = 0;
   for (const t of txns) {
-    const p = toPaisa(t.amount);
+    const p = toCents(t.amount);
     if (t.type === "income") incomeP += p;
     else expenseP += p;
   }
@@ -66,7 +66,7 @@ export default async function InsightsPage({
   for (const t of yearTxns) {
     if (t.is_transfer) continue;
     const k = monthKey(t.date);
-    const p = toPaisa(t.amount);
+    const p = toCents(t.amount);
     if (t.type === "income") {
       yearIncomeP += p;
       acctInc.set(t.account_id, (acctInc.get(t.account_id) ?? 0) + p);
@@ -95,8 +95,8 @@ export default async function InsightsPage({
     const v = byMonth.get(m)!;
     return {
       month: shortMonth(m),
-      income: fromPaisa(v.income),
-      expense: fromPaisa(v.expense),
+      income: fromCents(v.income),
+      expense: fromCents(v.expense),
     };
   });
 
@@ -106,33 +106,33 @@ export default async function InsightsPage({
   }));
 
   const cats = [...catP.entries()]
-    .map(([name, p]) => ({ name, value: fromPaisa(p) }))
+    .map(([name, p]) => ({ name, value: fromCents(p) }))
     .sort((a, b) => b.value - a.value);
   const topCats = cats.slice(0, 8);
   const rest = cats.slice(8).reduce((s, c) => s + c.value, 0);
   if (rest > 0) topCats.push({ name: "Other", value: rest });
 
   const topDesc = [...descExp.entries()]
-    .map(([name, p]) => ({ name, value: fromPaisa(p) }))
+    .map(([name, p]) => ({ name, value: fromCents(p) }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 10);
 
   const byAccount = accounts
     .map((a) => ({
       name: a.name,
-      income: fromPaisa(acctInc.get(a.id) ?? 0),
-      expense: fromPaisa(acctExp.get(a.id) ?? 0),
+      income: fromCents(acctInc.get(a.id) ?? 0),
+      expense: fromCents(acctExp.get(a.id) ?? 0),
     }))
     .filter((r) => r.income > 0 || r.expense > 0);
 
-  const income = fromPaisa(yearIncomeP);
-  const expense = fromPaisa(yearExpenseP);
-  const net = fromPaisa(yearIncomeP - yearExpenseP);
+  const income = fromCents(yearIncomeP);
+  const expense = fromCents(yearExpenseP);
+  const net = fromCents(yearIncomeP - yearExpenseP);
   const savingsRate = income > 0 ? Math.round(((income - expense) / income) * 1000) / 10 : 0;
   const avgExpense =
-    monthsReal.length > 0 ? fromPaisa(Math.round(yearExpenseP / monthsReal.length)) : 0;
+    monthsReal.length > 0 ? fromCents(Math.round(yearExpenseP / monthsReal.length)) : 0;
 
-  const prevNet = fromPaisa(prevIncomeP - prevExpenseP);
+  const prevNet = fromCents(prevIncomeP - prevExpenseP);
   const netDelta = net - prevNet;
 
   return (
@@ -207,7 +207,7 @@ export default async function InsightsPage({
         </div>
         <div className="card card-hover p-4">
           <p className="text-xs font-medium text-[var(--muted)]">{prevYear} expense</p>
-          <p className="mt-1 text-xl font-extrabold tabular-nums">{formatBDT(fromPaisa(prevExpenseP))}</p>
+          <p className="mt-1 text-xl font-extrabold tabular-nums">{formatBDT(fromCents(prevExpenseP))}</p>
         </div>
       </div>
 

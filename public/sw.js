@@ -1,5 +1,5 @@
-// Minimal offline shell for Paisa.
-const CACHE = "paisa-v1";
+// Minimal offline shell for Ledger.
+const CACHE = "ledger-v1";
 const APP_SHELL = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {

@@ -1,4 +1,4 @@
--- Paisa — personal finance tracker schema
+-- Ledger — personal finance tracker schema
 -- Run this in the Supabase SQL editor (or via `supabase db push`).
 
 -- ---------- Accounts ----------

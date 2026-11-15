@@ -63,7 +63,7 @@ export async function GET(request: Request) {
       return new NextResponse(JSON.stringify(payload, null, 2), {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
-          "Content-Disposition": `attachment; filename="paisa-backup-${new Date().toISOString().slice(0, 10)}.json"`,
+          "Content-Disposition": `attachment; filename="ledger-backup-${new Date().toISOString().slice(0, 10)}.json"`,
         },
       });
     }
@@ -113,7 +113,7 @@ export async function GET(request: Request) {
     return new NextResponse(lines.join("\n"), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="paisa-${label}.csv"`,
+        "Content-Disposition": `attachment; filename="ledger-${label}.csv"`,
       },
     });
   } catch (e) {

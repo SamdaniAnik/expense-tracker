@@ -21,13 +21,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Paisa — Personal Finance",
+  title: "Ledger — Personal Finance",
   description: "Private income & expense tracker.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Paisa",
+    title: "Ledger",
   },
 };
 

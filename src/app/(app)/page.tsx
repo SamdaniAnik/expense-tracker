@@ -3,7 +3,7 @@ import { getAccounts, getTransactions, getTransactionsBefore } from "@/lib/data"
 import { excelMonthSummary } from "@/lib/balances";
 import { getExcelMonthSummary, getExcelYears } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
-import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
+import { formatBDT, toCents, fromCents } from "@/lib/money";
 import { getBudgets, budgetProgress } from "@/lib/budgets";
 import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 import HomeMonthPicker from "@/components/HomeMonthPicker";
@@ -21,14 +21,14 @@ function monthFlow(txns: Transaction[]) {
   let expenseP = 0;
   for (const t of txns) {
     if (t.is_transfer) continue;
-    const p = toPaisa(Number(t.amount) || 0);
+    const p = toCents(Number(t.amount) || 0);
     if (t.type === "income") incomeP += p;
     else expenseP += p;
   }
   return {
-    income: fromPaisa(incomeP),
-    expense: fromPaisa(expenseP),
-    net: fromPaisa(incomeP - expenseP),
+    income: fromCents(incomeP),
+    expense: fromCents(expenseP),
+    net: fromCents(incomeP - expenseP),
   };
 }
 
@@ -37,13 +37,13 @@ function monthEndBalance(
   monthTxns: Transaction[],
   sheetOpening: number | undefined,
 ): number {
-  let paisa =
-    typeof sheetOpening === "number" ? toPaisa(sheetOpening) : toPaisa(account.opening_balance);
+  let cents =
+    typeof sheetOpening === "number" ? toCents(sheetOpening) : toCents(account.opening_balance);
   for (const t of monthTxns) {
     if (t.account_id !== account.id) continue;
-    paisa += t.type === "income" ? toPaisa(Number(t.amount) || 0) : -toPaisa(Number(t.amount) || 0);
+    cents += t.type === "income" ? toCents(Number(t.amount) || 0) : -toCents(Number(t.amount) || 0);
   }
-  return fromPaisa(paisa);
+  return fromCents(cents);
 }
 
 export default async function DashboardPage({

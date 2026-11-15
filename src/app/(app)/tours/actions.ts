@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { inviteCode } from "@/lib/tours";
-import { fromPaisa, toPaisa } from "@/lib/money";
+import { fromCents, toCents } from "@/lib/money";
 
 export async function createTour(formData: FormData) {
   const supabase = await createClient();
@@ -173,7 +173,7 @@ export async function addTourExpense(formData: FormData) {
     });
   } else {
     const n = included.length;
-    const totalP = toPaisa(amount);
+    const totalP = toCents(amount);
     const each = Math.floor(totalP / n);
     let rem = totalP - each * n;
     shares = included.map((member_id) => {
@@ -182,7 +182,7 @@ export async function addTourExpense(formData: FormData) {
       return {
         expense_id: expense.id,
         member_id,
-        owed_amount: fromPaisa(each + extra),
+        owed_amount: fromCents(each + extra),
       };
     });
   }

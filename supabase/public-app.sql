@@ -1,4 +1,4 @@
--- Paisa public-app pack: profiles, tours (Splitwise-style), FX cache
+-- Ledger public-app pack: profiles, tours (Splitwise-style), FX cache
 -- Run in Supabase SQL editor after schema.sql / fix-rls.sql
 
 -- ---------- Profiles ----------

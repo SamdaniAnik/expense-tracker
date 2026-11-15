@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { toPaisa, fromPaisa } from "@/lib/money";
+import { toCents, fromCents } from "@/lib/money";
 import type { Budget, Transaction } from "@/lib/types";
 
 export const getBudgets = cache(async (): Promise<Budget[]> => {
@@ -35,9 +35,9 @@ export function spentByCategory(txns: Transaction[], category: string): number {
     if (t.type !== "expense") continue;
     if (t.is_transfer) continue;
     if ((t.category || "").toLowerCase() !== key) continue;
-    p += toPaisa(Number(t.amount));
+    p += toCents(Number(t.amount));
   }
-  return fromPaisa(p);
+  return fromCents(p);
 }
 
 export interface BudgetProgress {
