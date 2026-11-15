@@ -5,8 +5,9 @@ import { getExcelMonthSummary, getExcelYears } from "@/lib/month-summaries";
 import { accountKeyFromName } from "@/lib/account-key";
 import { formatBDT, formatBDTCompact, toCents, fromCents } from "@/lib/money";
 import { getBudgets, budgetProgress } from "@/lib/budgets";
-import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
+import { SectionTitle, AccountCard, Empty } from "@/components/ui";
 import HomeMonthPicker from "@/components/HomeMonthPicker";
+import HomeRecent from "@/components/HomeRecent";
 import MonthCompare from "@/components/MonthCompare";
 import type { Account, Transaction } from "@/lib/types";
 
@@ -97,7 +98,7 @@ export default async function DashboardPage({
     return String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
   });
 
-  const accountName = new Map(accounts.map((a) => [a.id, a.name]));
+  const accountName = Object.fromEntries(accounts.map((a) => [a.id, a.name]));
   const monthLabel = new Date(ym + "-01T00:00:00").toLocaleDateString("en-GB", {
     month: "long",
     year: "numeric",
@@ -259,8 +260,8 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <section className="lg:col-span-4">
+      <div className="grid w-full min-w-0 max-w-full gap-6 lg:grid-cols-12">
+        <section className="min-w-0 lg:col-span-4">
           <SectionTitle
             action={
               <Link href="/accounts" className="text-xs font-semibold text-[var(--primary)]">
@@ -279,7 +280,7 @@ export default async function DashboardPage({
               .
             </Empty>
           ) : (
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-1">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1">
               {active.map((a) => {
                 const key = accountKeyFromName(a.name);
                 const open = key ? sheet?.accounts?.[key] : undefined;
@@ -295,7 +296,7 @@ export default async function DashboardPage({
           )}
         </section>
 
-        <section className="lg:col-span-8">
+        <section className="min-w-0 lg:col-span-8">
           <SectionTitle
             action={
               <Link href={`/months?m=${ym}`} className="text-xs font-semibold text-[var(--primary)]">
@@ -305,82 +306,12 @@ export default async function DashboardPage({
           >
             Recent · {monthLabel}
           </SectionTitle>
-          {recent.length === 0 ? (
-            <Empty>
-              No transactions in {monthLabel}.{" "}
-              <Link href={addHref} className="font-semibold text-[var(--primary)]">
-                Add one
-              </Link>
-              .
-            </Empty>
-          ) : (
-            <>
-              <div className="card divide-y divide-[var(--border)] overflow-hidden lg:hidden">
-                {recent.slice(0, 40).map((t) => (
-                  <TxRow key={t.id} tx={t} accountName={accountName.get(t.account_id) ?? "—"} />
-                ))}
-              </div>
-
-              <div className="card hidden overflow-hidden lg:block">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[40rem] border-collapse text-sm">
-                    <thead>
-                      <tr className="border-b-[1.5px] border-[var(--border-strong)] bg-[var(--surface-2)] text-left text-[0.68rem] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3">Account</th>
-                        <th className="px-4 py-3 text-right">Income</th>
-                        <th className="px-4 py-3 text-right">Expense</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recent.map((t) => (
-                        <tr
-                          key={t.id}
-                          className="border-b border-[var(--border)] transition-colors last:border-0 odd:bg-[color-mix(in_srgb,var(--surface-2)_40%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_7%,var(--surface))]"
-                        >
-                          <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-[var(--muted)]">
-                            <Link href={`/transactions/${t.id}/edit`} className="hover:text-[var(--primary)]">
-                              {new Date(t.date + "T00:00:00").toLocaleDateString("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                              })}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <Link
-                              href={`/transactions/${t.id}/edit`}
-                              className="font-medium hover:text-[var(--primary)]"
-                            >
-                              {t.description || "—"}
-                            </Link>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-[var(--muted)]">
-                            {accountName.get(t.account_id) ?? "—"}
-                          </td>
-                          <td
-                            className="px-4 py-2.5 text-right tabular-nums font-semibold"
-                            style={{ color: "var(--income)" }}
-                          >
-                            {t.type === "income" ? formatBDT(Number(t.amount)) : ""}
-                          </td>
-                          <td
-                            className="px-4 py-2.5 text-right tabular-nums font-semibold"
-                            style={{ color: "var(--expense)" }}
-                          >
-                            {t.type === "expense" ? formatBDT(Number(t.amount)) : ""}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-[var(--muted)]">
-                {recent.length} entries · newest first
-              </p>
-            </>
-          )}
+          <HomeRecent
+            rows={recent}
+            accountName={accountName}
+            monthLabel={monthLabel}
+            addHref={addHref}
+          />
         </section>
       </div>
     </div>

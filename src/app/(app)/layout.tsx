@@ -15,10 +15,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     adminEmails().includes((profile?.email ?? "").toLowerCase());
 
   return (
-    <div className="min-h-dvh lg:flex">
+    <div className="min-h-dvh w-full overflow-x-hidden lg:flex">
       <SideNav isAdmin={isAdmin} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 w-full flex-1 flex-col overflow-x-hidden">
         <main
           className="app-main mx-auto w-full max-w-6xl flex-1 px-3 pt-4 sm:px-6 lg:px-8 lg:pt-8 lg:pb-10"
           style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}

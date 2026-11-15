@@ -41,7 +41,7 @@ export default function HomeMonthPicker({
       </label>
       <select
         id="home-month"
-        className="input !w-auto min-w-[9.5rem] py-2 text-sm font-semibold"
+        className="input !w-auto min-w-0 max-w-[9.5rem] flex-1 py-2 text-sm font-semibold"
         value={mon}
         onChange={(e) => go(year, Number(e.target.value))}
       >
@@ -56,7 +56,7 @@ export default function HomeMonthPicker({
       </label>
       <select
         id="home-year"
-        className="input !w-auto min-w-[5.5rem] py-2 text-sm font-semibold"
+        className="input !w-auto min-w-0 max-w-[5.5rem] py-2 text-sm font-semibold"
         value={year}
         onChange={(e) => go(Number(e.target.value), mon)}
       >

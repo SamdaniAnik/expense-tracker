@@ -80,18 +80,19 @@ export function AccountCard({
   balance: number;
 }) {
   return (
-    <div className="card card-hover min-w-0 flex-1 overflow-hidden p-3.5 sm:p-4">
-      <div className="flex items-center gap-2.5">
+    <div className="card card-hover w-full min-w-0 max-w-full overflow-hidden p-3 sm:p-4">
+      <div className="flex min-w-0 items-center gap-2">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-base ring-1 ring-[var(--border)]">
           {typeEmoji[account.type]}
         </span>
-        <span className="min-w-0 truncate text-sm font-bold">{account.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold">{account.name}</span>
       </div>
       <div
-        className="mt-3 truncate text-lg font-extrabold tabular-nums sm:text-xl"
+        className="mt-2 truncate text-base font-extrabold tabular-nums sm:mt-3 sm:text-xl"
         style={{ color: balance < 0 ? "var(--expense)" : "var(--text)" }}
       >
-        {formatBDT(balance)}
+        <span className="sm:hidden">{formatBDTCompact(balance)}</span>
+        <span className="hidden sm:inline">{formatBDT(balance)}</span>
       </div>
       <div className="mt-0.5 truncate text-xs font-medium text-[var(--muted)]">
         {ACCOUNT_TYPE_LABEL[account.type]}
@@ -112,13 +113,14 @@ export function TxRow({
   accountName: string;
 }) {
   const income = tx.type === "income";
+  const amount = Number(tx.amount) || 0;
   return (
     <Link
       href={`/transactions/${tx.id}/edit`}
-      className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
+      className="flex min-w-0 max-w-full items-center gap-2.5 px-3 py-3 transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
     >
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
         style={{
           background: income ? "var(--income-soft)" : "var(--expense-soft)",
           color: income ? "var(--income)" : "var(--expense)",
@@ -129,7 +131,7 @@ export function TxRow({
       >
         {initials(tx.description || tx.category || "?")}
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <div className="truncate text-sm font-semibold">
           {tx.description || tx.category || "Transaction"}
         </div>
@@ -138,13 +140,14 @@ export function TxRow({
           {tx.category ? ` · ${tx.category}` : ""}
         </div>
       </div>
-      <div className="shrink-0 text-right">
+      <div className="w-[5.75rem] shrink-0 text-right sm:w-auto">
         <div
-          className="whitespace-nowrap text-sm font-bold tabular-nums"
+          className="truncate text-sm font-bold tabular-nums sm:whitespace-nowrap"
           style={{ color: income ? "var(--income)" : "var(--expense)" }}
         >
           {income ? "+" : "−"}
-          {formatBDT(tx.amount)}
+          <span className="sm:hidden">{formatBDTCompact(amount)}</span>
+          <span className="hidden sm:inline">{formatBDT(amount)}</span>
         </div>
         <div className="text-xs text-[var(--muted)]">{formatDay(tx.date)}</div>
       </div>

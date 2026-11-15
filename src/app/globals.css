@@ -115,6 +115,9 @@
 html,
 body {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -145,11 +148,12 @@ h3,
   }
 }
 
-/* Keep pages from sideways-scrolling on phones without breaking fixed nav */
+/* Phone pages must never grow wider than the screen */
 .app-main {
-  overflow-x: clip;
   max-width: 100%;
   min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .sr-only {

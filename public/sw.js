@@ -1,5 +1,5 @@
 // Minimal offline shell for Ledger.
-const CACHE = "ledger-v2";
+const CACHE = "ledger-v3";
 const APP_SHELL = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {
