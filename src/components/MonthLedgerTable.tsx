@@ -144,19 +144,20 @@ export default function MonthLedgerTable({
       </>
     ) : null;
 
+  const goldBg = "color-mix(in srgb, var(--gold) 20%, var(--surface))";
   const footer = (
     <>
       <tr>
         <td colSpan={3}>Month totals</td>
         <td
           className="text-right tabular-nums"
-          style={{ background: "#ecfdf5", color: "#047857" }}
+          style={{ background: "var(--income-soft)", color: "var(--income)" }}
         >
           {formatBDT(incomeTotal)}
         </td>
         <td
           className="text-right tabular-nums"
-          style={{ background: "#fff1f2", color: "#be123c" }}
+          style={{ background: "var(--expense-soft)", color: "var(--expense)" }}
         >
           {formatBDT(expenseTotal)}
         </td>
@@ -165,13 +166,13 @@ export default function MonthLedgerTable({
           <div className="text-[0.65rem] font-normal text-[var(--muted)]">start of month</div>
         </td>
       </tr>
-      <tr style={{ background: "#fef08a" }}>
-        <td colSpan={5} style={{ color: "#854d0e", background: "#fef08a" }}>
-          Closing overall (yellow)
+      <tr>
+        <td colSpan={5} style={{ color: "var(--gold)", background: goldBg }}>
+          Closing overall balance
         </td>
         <td
           className="text-right tabular-nums"
-          style={{ color: "#121826", background: "#fef08a" }}
+          style={{ color: "var(--text)", background: goldBg }}
         >
           {formatBDT(closingOverall)}
         </td>
