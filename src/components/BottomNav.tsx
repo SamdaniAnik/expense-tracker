@@ -7,8 +7,8 @@ import { HomeIcon, ListIcon, GiftIcon, WalletIcon, PlusIcon } from "./icons";
 const items = [
   { href: "/", label: "Home", Icon: HomeIcon, match: (p: string) => p === "/" },
   { href: "/months", label: "Months", Icon: ListIcon, match: (p: string) => p.startsWith("/months") || p.startsWith("/transactions") },
-  { href: "/gifts", label: "Gifts", Icon: GiftIcon, match: (p: string) => p.startsWith("/gifts") },
-  { href: "/accounts", label: "Accounts", Icon: WalletIcon, match: (p: string) => p.startsWith("/accounts") },
+  { href: "/tours", label: "Tours", Icon: GiftIcon, match: (p: string) => p.startsWith("/tours") },
+  { href: "/accounts", label: "Accounts", Icon: WalletIcon, match: (p: string) => p.startsWith("/accounts") || p.startsWith("/settings") },
 ];
 
 export default function BottomNav() {

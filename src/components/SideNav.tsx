@@ -14,10 +14,10 @@ const items = [
     match: (p: string) => p.startsWith("/months") || p.startsWith("/transactions"),
   },
   {
-    href: "/gifts",
-    label: "Gifts",
+    href: "/tours",
+    label: "Tours",
     Icon: GiftIcon,
-    match: (p: string) => p.startsWith("/gifts"),
+    match: (p: string) => p.startsWith("/tours"),
   },
   {
     href: "/insights",
@@ -38,14 +38,18 @@ const more = [
   { href: "/transfer", label: "Transfer" },
   { href: "/recurring", label: "Recurring" },
   { href: "/debts", label: "Loans & debts" },
-  { href: "/household", label: "Household" },
+  { href: "/gifts", label: "Gifts" },
+  { href: "/settings", label: "Settings" },
   { href: "/backup", label: "Backup" },
 ];
 
-export default function SideNav() {
+export default function SideNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const now = new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const moreLinks = isAdmin
+    ? [...more, { href: "/admin", label: "Admin" }]
+    : more;
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-3.5 py-5 backdrop-blur lg:flex">
@@ -91,7 +95,7 @@ export default function SideNav() {
         <p className="mb-1 mt-5 px-3 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--faint)]">
           More
         </p>
-        {more.map(({ href, label }) => {
+        {moreLinks.map(({ href, label }) => {
           const active = pathname.startsWith(href);
           return (
             <Link
