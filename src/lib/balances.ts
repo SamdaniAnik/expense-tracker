@@ -152,19 +152,39 @@ export function monthOpeningOverall(
 }
 
 /**
- * Excel month footer figures:
- * - opening (sum of beginning balances / prior activity)
- * - income / expense for the month (green / pink)
- * - closing (yellow) = opening + income − expense
+ * Excel month figures:
+ * Total balance (yellow) = sum(starting balances of all accounts) + income − expense
+ *
+ * Prefers values captured from the Google Sheet (Beginning Balance rows + footer).
+ * Falls back to reconstructing from openings + prior transactions.
  */
 export function excelMonthSummary(
   accounts: Pick<Account, "opening_balance" | "opening_date">[],
   txns: Pick<Transaction, "date" | "type" | "amount">[],
   ym: string,
-): { opening: number; income: number; expense: number; closing: number } {
+  sheet?: { opening: number; income: number; expense: number; closing: number } | null,
+): { opening: number; income: number; expense: number; closing: number; source: "excel" | "computed" } {
   const [y, m] = ym.split("-").map(Number);
-  const { income, expense } = monthTotals(txns, y, m);
+  const computed = monthTotals(txns, y, m);
+
+  if (sheet && (sheet.opening || sheet.income || sheet.expense)) {
+    // Prefer live income/expense from DB when present; opening always from Excel begins.
+    const income = computed.income || sheet.income;
+    const expense = computed.expense || sheet.expense;
+    const opening = sheet.opening;
+    const closing = fromPaisa(toPaisa(opening) + toPaisa(income) - toPaisa(expense));
+    return { opening, income, expense, closing, source: "excel" };
+  }
+
   const opening = monthOpeningOverall(accounts, txns, ym);
-  const closing = fromPaisa(toPaisa(opening) + toPaisa(income) - toPaisa(expense));
-  return { opening, income, expense, closing };
+  const closing = fromPaisa(
+    toPaisa(opening) + toPaisa(computed.income) - toPaisa(computed.expense),
+  );
+  return {
+    opening,
+    income: computed.income,
+    expense: computed.expense,
+    closing,
+    source: "computed",
+  };
 }

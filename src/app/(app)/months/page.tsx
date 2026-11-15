@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
 import { formatBDT, toPaisa, fromPaisa } from "@/lib/money";
-import { accountBalanceAsOf } from "@/lib/balances";
+import { accountBalanceAsOf, excelMonthSummary } from "@/lib/balances";
+import { getExcelMonthSummary } from "@/lib/month-summaries";
 import { StatTile, Empty } from "@/components/ui";
 import MonthJump from "@/components/MonthJump";
 import type { Account, Transaction } from "@/lib/types";
@@ -60,29 +61,32 @@ export default async function MonthsPage({
     (a, b) => a.date.localeCompare(b.date) || a.created_at.localeCompare(b.created_at),
   );
 
-  // Excel "Overall Balance" column = starting balance of the month
-  const startPaisa = monthStartingPaisa(active, allTxns, monthStart);
-  const startingOverall = fromPaisa(startPaisa);
-
-  let incomeP = 0;
-  let expenseP = 0;
-  for (const t of txns) {
-    const p = toPaisa(t.amount);
-    if (t.type === "income") incomeP += p;
-    else expenseP += p;
-  }
-
-  // Yellow cell in the sheet
-  const closingOverall = fromPaisa(startPaisa + incomeP - expenseP);
+  const sheet = getExcelMonthSummary(month);
+  const summary = excelMonthSummary(active, allTxns, month, sheet);
+  const startingOverall = summary.opening;
+  const closingOverall = summary.closing;
+  const incomeP = toPaisa(summary.income);
+  const expenseP = toPaisa(summary.expense);
 
   const priorTxns = allTxns.filter((t) => t.date < monthStart);
   const beginRows = active
     .filter((a) => a.opening_date <= monthStart)
-    .map((a) => ({
-      account: a,
-      // Per-account starting balance for this month (Excel Beginning Balance rows)
-      balance: accountBalanceAsOf(a, priorTxns, monthStart),
-    }));
+    .map((a) => {
+      const key =
+        /standard|scb/i.test(a.name) ? "SCB"
+        : /bkash/i.test(a.name) ? "BKASH"
+        : /nagad/i.test(a.name) ? "NAGAD"
+        : /cash/i.test(a.name) ? "CASH"
+        : "";
+      const fromSheet = key && sheet?.accounts?.[key];
+      return {
+        account: a,
+        balance:
+          typeof fromSheet === "number"
+            ? fromSheet
+            : accountBalanceAsOf(a, priorTxns, monthStart),
+      };
+    });
 
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const label = new Date(month + "-01T00:00:00").toLocaleDateString("en-GB", {

@@ -52,16 +52,27 @@ export async function getTransactions(
   return (data ?? []) as Transaction[];
 }
 
-/** All transactions, used for whole-period computations (balances, charts). */
+/** All transactions, used for whole-period computations (balances, charts).
+ * Paginates past Supabase's default 1000-row cap. */
 export async function getAllTransactions(): Promise<Transaction[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at")
-    .order("date", { ascending: false })
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as Transaction[];
+  const pageSize = 1000;
+  const out: Transaction[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(
+        "id,user_id,account_id,date,type,amount,description,category,note,created_at,updated_at",
+      )
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as Transaction[];
+    out.push(...chunk);
+    if (chunk.length < pageSize) break;
+  }
+  return out;
 }
 
 export async function getTransaction(id: string): Promise<Transaction | null> {

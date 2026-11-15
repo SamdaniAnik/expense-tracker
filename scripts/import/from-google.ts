@@ -291,6 +291,139 @@ function parseWorkbook(buf: Buffer): RawRow[] {
   return out;
 }
 
+export interface MonthSummary {
+  opening: number;
+  income: number;
+  expense: number;
+  closing: number;
+  accounts: Record<string, number>;
+}
+
+/** Pull Excel beginning balances + footer totals per month (yellow = closing). */
+function extractMonthSummaries(buf: Buffer): Record<string, MonthSummary> {
+  const wb = XLSX.read(buf, { type: "buffer", cellDates: false });
+  const out: Record<string, MonthSummary> = {};
+
+  for (const name of wb.SheetNames) {
+    if (SKIP_SHEETS.has(name)) continue;
+    const yearHint = sheetYear(name);
+    if (!yearHint) continue;
+
+    // "November 2026" → 2026-11
+    const monthName = name.match(
+      /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})$/i,
+    );
+    if (!monthName) continue;
+    const monthNum =
+      [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+      ].indexOf(monthName[1].toLowerCase()) + 1;
+    const ym = `${monthName[2]}-${String(monthNum).padStart(2, "0")}`;
+
+    const rows = XLSX.utils.sheet_to_json<(string | number)[]>(wb.Sheets[name], {
+      header: 1,
+      defval: "",
+      raw: false,
+    });
+
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(12, rows.length); i++) {
+      const cells = rows[i].map((c) => String(c).toLowerCase());
+      if (cells.some((c) => c.includes("account")) && cells.includes("date")) {
+        headerIdx = i;
+        break;
+      }
+    }
+    if (headerIdx < 0) continue;
+
+    const header = rows[headerIdx].map((c) => String(c).toLowerCase());
+    const col = {
+      account: header.findIndex((c) => c.includes("account") && !c.includes("balance")),
+      date: header.findIndex((c) => c === "date"),
+      desc: header.findIndex((c) => c.includes("description")),
+      income: header.findIndex((c) => c.includes("income")),
+      expense: header.findIndex((c) => c.includes("expense")),
+      overall: header.findIndex(
+        (c) => c.includes("overall") || c.includes("account balance"),
+      ),
+    };
+
+    const accounts: Record<string, number> = {};
+    let openingFromBegins = 0;
+
+    for (let i = headerIdx + 1; i < Math.min(headerIdx + 20, rows.length); i++) {
+      const r = rows[i];
+      if (!r) continue;
+      const accountCell = String(r[col.account] ?? "").trim();
+      const descCell = String(r[col.desc] ?? "").trim();
+      const incomeCell = String(r[col.income] ?? "").trim();
+      const expenseCell = String(r[col.expense] ?? "").trim();
+      const balCell = String(r[col.overall] ?? "").trim();
+      if (!isBeginRow(accountCell, descCell, incomeCell, expenseCell)) continue;
+      const acc =
+        resolveAccount(accountCell)?.key ?? guessAccountFromText(accountCell, descCell);
+      if (!acc) continue;
+      const amount = parseMoney(balCell);
+      if (!Number.isFinite(amount)) continue;
+      accounts[acc] = amount;
+      openingFromBegins += amount;
+    }
+
+    // Footer rows: blank identity cols + numbers in income/expense/overall
+    type Footer = { income: number; expense: number; overall: number; closingOnly?: number };
+    const footers: Footer[] = [];
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r) continue;
+      const a = String(r[col.account] ?? "").trim();
+      const b = String(r[col.date] ?? "").trim();
+      const c = String(r[col.desc] ?? "").trim();
+      const inc = parseMoney(String(r[col.income] ?? ""));
+      const exp = parseMoney(String(r[col.expense] ?? ""));
+      const ov = parseMoney(String(r[col.overall] ?? ""));
+      if (a || b || c) continue;
+      if (!Number.isFinite(ov) && !Number.isFinite(inc) && !Number.isFinite(exp)) continue;
+      footers.push({
+        income: Number.isFinite(inc) && inc > 0 ? inc : 0,
+        expense: Number.isFinite(exp) && exp > 0 ? exp : 0,
+        overall: Number.isFinite(ov) ? ov : 0,
+      });
+    }
+
+    // First footer with income+expense = month totals + starting overall in Overall Balance col
+    const totalsRow = footers.find((f) => f.income > 0 || f.expense > 0);
+    // Last footer that is overall-only (or last overall) ≈ yellow closing
+    const closingRow = [...footers].reverse().find((f) => f.overall > 0 && f.income === 0 && f.expense === 0);
+
+    const opening =
+      openingFromBegins > 0
+        ? Math.round(openingFromBegins * 100) / 100
+        : totalsRow?.overall || 0;
+    const income = totalsRow?.income ?? 0;
+    const expense = totalsRow?.expense ?? 0;
+    const closing =
+      closingRow?.overall ??
+      Math.round((opening + income - expense) * 100) / 100;
+
+    if (opening || income || expense) {
+      out[ym] = { opening, income, expense, closing, accounts };
+    }
+  }
+
+  return out;
+}
+
 async function main() {
   let buf: Buffer;
   try {
@@ -302,6 +435,15 @@ async function main() {
     } else {
       throw e;
     }
+  }
+
+  const summaries = extractMonthSummaries(buf);
+  const summaryPath = join(process.cwd(), "src", "data", "month-summaries.json");
+  mkdirSync(join(process.cwd(), "src", "data"), { recursive: true });
+  writeFileSync(summaryPath, JSON.stringify(summaries, null, 2) + "\n");
+  console.log(`Wrote ${Object.keys(summaries).length} month summaries → ${summaryPath}`);
+  if (summaries["2026-11"]) {
+    console.log("  Nov 2026 Excel:", summaries["2026-11"]);
   }
 
   const raw = parseWorkbook(buf);

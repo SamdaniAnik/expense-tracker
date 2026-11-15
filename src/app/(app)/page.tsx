@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAccounts, getAllTransactions, getTransactions } from "@/lib/data";
 import { accountBalance, excelMonthSummary } from "@/lib/balances";
+import { getExcelMonthSummary } from "@/lib/month-summaries";
 import { formatBDT } from "@/lib/money";
 import { SectionTitle, AccountCard, TxRow, Empty } from "@/components/ui";
 
@@ -14,8 +15,8 @@ export default async function DashboardPage() {
   const active = accounts.filter((a) => !a.archived);
   const now = new Date();
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  // Match Google Sheet month footer: yellow closing, green income, pink expense, opening overall
-  const excel = excelMonthSummary(active, txns, ym);
+  // Yellow = all account starting balances + income − expense (Excel)
+  const excel = excelMonthSummary(active, txns, ym, getExcelMonthSummary(ym));
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const monthLabel = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 
@@ -24,19 +25,18 @@ export default async function DashboardPage() {
       <header className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm text-[var(--muted)]">Total balance · {monthLabel}</p>
-          {/* Yellow cell in the sheet = closing overall for the current month */}
           <p
             className="mt-1 inline-block rounded-lg px-2.5 py-1 text-3xl font-extrabold tabular-nums"
             style={{
               background: "#fef08a",
               color: excel.closing < 0 ? "var(--expense)" : "#121826",
             }}
-            title="Closing overall = Opening + Income − Expense (Excel yellow cell)"
+            title="Starting balances of all accounts + Income − Expense"
           >
             {formatBDT(excel.closing)}
           </p>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            Closing overall (Excel yellow)
+            All starting balances + income − expense
           </p>
         </div>
         <Link
@@ -79,8 +79,8 @@ export default async function DashboardPage() {
         </div>
       </div>
       <p className="mb-4 text-xs text-[var(--muted)]">
-        Opening {formatBDT(excel.opening)} + Income {formatBDT(excel.income)} − Expense{" "}
-        {formatBDT(excel.expense)} ={" "}
+        Starting balances {formatBDT(excel.opening)} + Income {formatBDT(excel.income)} −
+        Expense {formatBDT(excel.expense)} ={" "}
         <span className="font-semibold text-[var(--text)]">{formatBDT(excel.closing)}</span>
       </p>
 

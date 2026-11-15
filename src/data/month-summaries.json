@@ -1,0 +1,826 @@
+{
+  "2020-06": {
+    "opening": 73620.36,
+    "income": 0,
+    "expense": 0,
+    "closing": 73620.36,
+    "accounts": {
+      "SCB": 63960.36,
+      "BKASH": 9660
+    }
+  },
+  "2020-07": {
+    "opening": 23960,
+    "income": 45540,
+    "expense": 33747,
+    "closing": 35753,
+    "accounts": {
+      "SCB": 21360,
+      "BKASH": 2600
+    }
+  },
+  "2020-08": {
+    "opening": 35752,
+    "income": 7035,
+    "expense": 37833,
+    "closing": 4954,
+    "accounts": {
+      "SCB": 35151,
+      "BKASH": 601
+    }
+  },
+  "2020-09": {
+    "opening": 4954,
+    "income": 25446,
+    "expense": 8260,
+    "closing": 22140,
+    "accounts": {
+      "SCB": 1570,
+      "BKASH": 3384
+    }
+  },
+  "2020-10": {
+    "opening": 22155,
+    "income": 24400,
+    "expense": 25699,
+    "closing": 20856,
+    "accounts": {
+      "SCB": 21135,
+      "BKASH": 1020
+    }
+  },
+  "2020-11": {
+    "opening": 20827,
+    "income": 29280,
+    "expense": 47285,
+    "closing": 2822,
+    "accounts": {
+      "SCB": 20741,
+      "BKASH": 86
+    }
+  },
+  "2020-12": {
+    "opening": 2827,
+    "income": 25000,
+    "expense": 21208,
+    "closing": 6619,
+    "accounts": {
+      "SCB": 2213,
+      "BKASH": 614
+    }
+  },
+  "2021-01": {
+    "opening": 6614.66,
+    "income": 28399,
+    "expense": 30196,
+    "closing": 4817.66,
+    "accounts": {
+      "SCB": 6505.59,
+      "BKASH": 109.07
+    }
+  },
+  "2021-02": {
+    "opening": 4953,
+    "income": 33154,
+    "expense": 37132,
+    "closing": 975,
+    "accounts": {
+      "SCB": 4860,
+      "BKASH": 93
+    }
+  },
+  "2021-04": {
+    "opening": 41416,
+    "income": 145750,
+    "expense": 156849,
+    "closing": 30317,
+    "accounts": {
+      "SCB": 40552,
+      "BKASH": 864
+    }
+  },
+  "2021-05": {
+    "opening": 30315,
+    "income": 128700,
+    "expense": 89278,
+    "closing": 69737,
+    "accounts": {
+      "SCB": 27488,
+      "BKASH": 2827
+    }
+  },
+  "2021-06": {
+    "opening": 69743,
+    "income": 66370,
+    "expense": 101582,
+    "closing": 34531,
+    "accounts": {
+      "SCB": 68888,
+      "BKASH": 855
+    }
+  },
+  "2021-07": {
+    "opening": 34555,
+    "income": 19057,
+    "expense": 5811,
+    "closing": 47801,
+    "accounts": {
+      "SCB": 34388,
+      "BKASH": 167
+    }
+  },
+  "2021-08": {
+    "opening": 47806,
+    "income": 33200,
+    "expense": 63637,
+    "closing": 17369,
+    "accounts": {
+      "SCB": 47639,
+      "BKASH": 167
+    }
+  },
+  "2021-09": {
+    "opening": 17372,
+    "income": 34500,
+    "expense": 23123,
+    "closing": 28749,
+    "accounts": {
+      "SCB": 16789,
+      "BKASH": 583
+    }
+  },
+  "2021-10": {
+    "opening": 28749,
+    "income": 32000,
+    "expense": 49136,
+    "closing": 11613,
+    "accounts": {
+      "SCB": 28641,
+      "BKASH": 108
+    }
+  },
+  "2021-11": {
+    "opening": 12833,
+    "income": 41987,
+    "expense": 21593,
+    "closing": 33227,
+    "accounts": {
+      "SCB": 12590,
+      "BKASH": 243
+    }
+  },
+  "2021-12": {
+    "opening": 29229,
+    "income": 110149,
+    "expense": 125116,
+    "closing": 14262,
+    "accounts": {
+      "SCB": 29209,
+      "BKASH": 20
+    }
+  },
+  "2022-01": {
+    "opening": 13261,
+    "income": 35541,
+    "expense": 23683,
+    "closing": 25119,
+    "accounts": {
+      "SCB": 13013,
+      "BKASH": 248
+    }
+  },
+  "2022-02": {
+    "opening": 30098,
+    "income": 475,
+    "expense": 22415,
+    "closing": 8158,
+    "accounts": {
+      "SCB": 29850,
+      "BKASH": 248
+    }
+  },
+  "2022-03": {
+    "opening": 8158,
+    "income": 60000,
+    "expense": 42123,
+    "closing": 26035,
+    "accounts": {
+      "SCB": 2838,
+      "BKASH": 5320
+    }
+  },
+  "2022-04": {
+    "opening": 26035,
+    "income": 68750,
+    "expense": 22457,
+    "closing": 72328,
+    "accounts": {
+      "SCB": 25963,
+      "BKASH": 72
+    }
+  },
+  "2022-05": {
+    "opening": 72332,
+    "income": 46556,
+    "expense": 118272,
+    "closing": 616,
+    "accounts": {
+      "SCB": 72301,
+      "BKASH": 31
+    }
+  },
+  "2022-06": {
+    "opening": 618,
+    "income": 72583,
+    "expense": 38358,
+    "closing": 34843,
+    "accounts": {
+      "SCB": 550,
+      "BKASH": 25,
+      "NAGAD": 43
+    }
+  },
+  "2022-07": {
+    "opening": 34807,
+    "income": 122796,
+    "expense": 121637,
+    "closing": 35966,
+    "accounts": {
+      "SCB": 33837,
+      "BKASH": 947,
+      "NAGAD": 23
+    }
+  },
+  "2022-08": {
+    "opening": 35965,
+    "income": 144558,
+    "expense": 100782,
+    "closing": 79741,
+    "accounts": {
+      "SCB": 35915,
+      "BKASH": 27,
+      "NAGAD": 23
+    }
+  },
+  "2022-09": {
+    "opening": 79741,
+    "income": 46223,
+    "expense": 36345,
+    "closing": 89619,
+    "accounts": {
+      "SCB": 79741,
+      "BKASH": 0,
+      "NAGAD": 0
+    }
+  },
+  "2022-10": {
+    "opening": 88619,
+    "income": 51083,
+    "expense": 50106,
+    "closing": 89596,
+    "accounts": {
+      "SCB": 88605,
+      "BKASH": 13,
+      "NAGAD": 1
+    }
+  },
+  "2022-11": {
+    "opening": 90748,
+    "income": 64749,
+    "expense": 109275,
+    "closing": 46222,
+    "accounts": {
+      "SCB": 90596,
+      "BKASH": 100,
+      "NAGAD": 52
+    }
+  },
+  "2022-12": {
+    "opening": 46223,
+    "income": 3432,
+    "expense": 45573,
+    "closing": 4082,
+    "accounts": {
+      "SCB": 44191,
+      "BKASH": 1980,
+      "NAGAD": 52
+    }
+  },
+  "2023-01": {
+    "opening": 4072,
+    "income": 54652,
+    "expense": 58317,
+    "closing": 407,
+    "accounts": {
+      "SCB": 2000,
+      "BKASH": 2015,
+      "NAGAD": 57
+    }
+  },
+  "2023-02": {
+    "opening": 408,
+    "income": 150112,
+    "expense": 129094,
+    "closing": 21426,
+    "accounts": {
+      "SCB": 402,
+      "BKASH": 0,
+      "NAGAD": 6
+    }
+  },
+  "2023-03": {
+    "opening": 21424,
+    "income": 35583,
+    "expense": 22272,
+    "closing": 34735,
+    "accounts": {
+      "SCB": 17700,
+      "BKASH": 3718,
+      "NAGAD": 6
+    }
+  },
+  "2023-04": {
+    "opening": 34737,
+    "income": 60983,
+    "expense": 86097,
+    "closing": 9623,
+    "accounts": {
+      "SCB": 33421,
+      "BKASH": 1315,
+      "NAGAD": 1
+    }
+  },
+  "2023-05": {
+    "opening": 9623,
+    "income": 76666,
+    "expense": 34017,
+    "closing": 52272,
+    "accounts": {
+      "SCB": 3920,
+      "BKASH": 5702,
+      "NAGAD": 1
+    }
+  },
+  "2023-06": {
+    "opening": 52272,
+    "income": 66558,
+    "expense": 75808,
+    "closing": 43022,
+    "accounts": {
+      "SCB": 48507,
+      "BKASH": 3764,
+      "NAGAD": 1
+    }
+  },
+  "2023-07": {
+    "opening": 43032,
+    "income": 37900,
+    "expense": 16845,
+    "closing": 64087,
+    "accounts": {
+      "SCB": 36511,
+      "BKASH": 6520,
+      "NAGAD": 1
+    }
+  },
+  "2023-08": {
+    "opening": 64089,
+    "income": 130,
+    "expense": 42715,
+    "closing": 21504,
+    "accounts": {
+      "SCB": 59871,
+      "BKASH": 4217,
+      "NAGAD": 1
+    }
+  },
+  "2023-09": {
+    "opening": 21503,
+    "income": 67000,
+    "expense": 23772,
+    "closing": 64731,
+    "accounts": {
+      "SCB": 21500,
+      "BKASH": 2,
+      "NAGAD": 1
+    }
+  },
+  "2023-10": {
+    "opening": 64783,
+    "income": 94520,
+    "expense": 23473,
+    "closing": 135830,
+    "accounts": {
+      "SCB": 64781,
+      "BKASH": 1,
+      "NAGAD": 1
+    }
+  },
+  "2023-11": {
+    "opening": 135829,
+    "income": 93500,
+    "expense": 222386,
+    "closing": 6943,
+    "accounts": {
+      "SCB": 135345,
+      "BKASH": 483,
+      "NAGAD": 1
+    }
+  },
+  "2023-12": {
+    "opening": 6945,
+    "income": 146230,
+    "expense": 150740,
+    "closing": 2435,
+    "accounts": {
+      "SCB": 5354,
+      "BKASH": 1590,
+      "NAGAD": 1
+    }
+  },
+  "2024-01": {
+    "opening": 2485,
+    "income": 46013,
+    "expense": 44462,
+    "closing": 4036,
+    "accounts": {
+      "SCB": 2224,
+      "BKASH": 260,
+      "NAGAD": 1
+    }
+  },
+  "2024-02": {
+    "opening": 4038,
+    "income": 39000,
+    "expense": 41895,
+    "closing": 1143,
+    "accounts": {
+      "SCB": 3322,
+      "BKASH": 715,
+      "NAGAD": 1
+    }
+  },
+  "2024-03": {
+    "opening": 1142,
+    "income": 61000,
+    "expense": 16615,
+    "closing": 45527,
+    "accounts": {
+      "SCB": 1142,
+      "BKASH": 0,
+      "NAGAD": 0
+    }
+  },
+  "2024-04": {
+    "opening": 45558,
+    "income": 124300,
+    "expense": 105730,
+    "closing": 64128,
+    "accounts": {
+      "SCB": 45558,
+      "BKASH": 0,
+      "NAGAD": 0
+    }
+  },
+  "2024-05": {
+    "opening": 64149,
+    "income": 38100,
+    "expense": 85006,
+    "closing": 17243,
+    "accounts": {
+      "SCB": 63780,
+      "BKASH": 369,
+      "NAGAD": 0
+    }
+  },
+  "2024-06": {
+    "opening": 17243,
+    "income": 126906,
+    "expense": 34923,
+    "closing": 109226,
+    "accounts": {
+      "SCB": 16705,
+      "BKASH": 538,
+      "NAGAD": 0
+    }
+  },
+  "2024-07": {
+    "opening": 109227,
+    "income": 75520,
+    "expense": 81035,
+    "closing": 103712,
+    "accounts": {
+      "SCB": 109227,
+      "BKASH": 0,
+      "NAGAD": 0
+    }
+  },
+  "2024-08": {
+    "opening": 103714,
+    "income": 64583,
+    "expense": 24780,
+    "closing": 143517,
+    "accounts": {
+      "SCB": 103198,
+      "BKASH": 516,
+      "NAGAD": 0
+    }
+  },
+  "2024-09": {
+    "opening": 143516,
+    "income": 139237,
+    "expense": 19528,
+    "closing": 263225,
+    "accounts": {
+      "SCB": 142390,
+      "BKASH": 1126,
+      "NAGAD": 0
+    }
+  },
+  "2024-10": {
+    "opening": 263258,
+    "income": 44583,
+    "expense": 51711,
+    "closing": 256130,
+    "accounts": {
+      "SCB": 263210,
+      "BKASH": 48,
+      "NAGAD": 0
+    }
+  },
+  "2024-11": {
+    "opening": 256130,
+    "income": 68383,
+    "expense": 118078,
+    "closing": 206435,
+    "accounts": {
+      "SCB": 256128,
+      "BKASH": 2,
+      "NAGAD": 0
+    }
+  },
+  "2024-12": {
+    "opening": 206435,
+    "income": 110396,
+    "expense": 80666,
+    "closing": 236165,
+    "accounts": {
+      "SCB": 206427,
+      "BKASH": 8,
+      "NAGAD": 0
+    }
+  },
+  "2025-01": {
+    "opening": 236169,
+    "income": 49583,
+    "expense": 34346,
+    "closing": 251406,
+    "accounts": {
+      "SCB": 231152,
+      "BKASH": 5017,
+      "NAGAD": 0
+    }
+  },
+  "2025-02": {
+    "opening": 251410,
+    "income": 54583,
+    "expense": 13294,
+    "closing": 292699,
+    "accounts": {
+      "SCB": 251368,
+      "BKASH": 42,
+      "NAGAD": 0
+    }
+  },
+  "2025-03": {
+    "opening": 292760,
+    "income": 93001,
+    "expense": 82546,
+    "closing": 303215,
+    "accounts": {
+      "SCB": 292760,
+      "BKASH": 0,
+      "NAGAD": 0
+    }
+  },
+  "2025-04": {
+    "opening": 303531,
+    "income": 241017,
+    "expense": 289534,
+    "closing": 255014,
+    "accounts": {
+      "SCB": 301990,
+      "BKASH": 1541,
+      "NAGAD": 0
+    }
+  },
+  "2025-05": {
+    "opening": 255084,
+    "income": 49908,
+    "expense": 96301,
+    "closing": 208691,
+    "accounts": {
+      "SCB": 255078,
+      "BKASH": 6,
+      "NAGAD": 0
+    }
+  },
+  "2025-06": {
+    "opening": 208695,
+    "income": 63964,
+    "expense": 65410,
+    "closing": 207249,
+    "accounts": {
+      "SCB": 208665,
+      "BKASH": 30,
+      "NAGAD": 0
+    }
+  },
+  "2025-07": {
+    "opening": 207256,
+    "income": 69587,
+    "expense": 59252,
+    "closing": 217591,
+    "accounts": {
+      "SCB": 203354,
+      "BKASH": 3902,
+      "NAGAD": 0
+    }
+  },
+  "2025-08": {
+    "opening": 217645,
+    "income": 293183,
+    "expense": 394861,
+    "closing": 115967,
+    "accounts": {
+      "SCB": 213107,
+      "BKASH": 4538,
+      "NAGAD": 0
+    }
+  },
+  "2025-09": {
+    "opening": 116571.93,
+    "income": 190040.7,
+    "expense": 147046,
+    "closing": 159566.63,
+    "accounts": {
+      "SCB": 111391.93,
+      "BKASH": 5180,
+      "NAGAD": 0
+    }
+  },
+  "2025-10": {
+    "opening": 159766,
+    "income": 52772,
+    "expense": 118950,
+    "closing": 93588,
+    "accounts": {
+      "SCB": 148308,
+      "BKASH": 4458,
+      "CASH": 7000
+    }
+  },
+  "2025-11": {
+    "opening": 93591,
+    "income": 64585,
+    "expense": 116608,
+    "closing": 41568,
+    "accounts": {
+      "SCB": 85904,
+      "BKASH": 687,
+      "CASH": 7000
+    }
+  },
+  "2025-12": {
+    "opening": 41568,
+    "income": 95083,
+    "expense": 58382,
+    "closing": 78269,
+    "accounts": {
+      "SCB": 21998,
+      "BKASH": 12570,
+      "CASH": 7000
+    }
+  },
+  "2026-01": {
+    "opening": 78269,
+    "income": 50083,
+    "expense": 106390,
+    "closing": 21962,
+    "accounts": {
+      "SCB": 69814,
+      "BKASH": 955,
+      "CASH": 7500
+    }
+  },
+  "2026-02": {
+    "opening": 21963,
+    "income": 113315,
+    "expense": 76098,
+    "closing": 59180,
+    "accounts": {
+      "SCB": 17493,
+      "BKASH": 470,
+      "CASH": 4000
+    }
+  },
+  "2026-03": {
+    "opening": 59180,
+    "income": 171425,
+    "expense": 139927,
+    "closing": 90678,
+    "accounts": {
+      "SCB": 54180,
+      "BKASH": 0,
+      "CASH": 5000
+    }
+  },
+  "2026-04": {
+    "opening": 91678,
+    "income": 47583,
+    "expense": 89247,
+    "closing": 50014,
+    "accounts": {
+      "SCB": 87678,
+      "BKASH": 0,
+      "CASH": 4000
+    }
+  },
+  "2026-05": {
+    "opening": 50014,
+    "income": 79099,
+    "expense": 54480,
+    "closing": 74633,
+    "accounts": {
+      "SCB": 44546,
+      "BKASH": 968,
+      "CASH": 4500
+    }
+  },
+  "2026-06": {
+    "opening": 74633,
+    "income": 84575,
+    "expense": 80203,
+    "closing": 79005,
+    "accounts": {
+      "SCB": 68357,
+      "BKASH": 276,
+      "CASH": 6000
+    }
+  },
+  "2026-07": {
+    "opening": 79005,
+    "income": 108645,
+    "expense": 54641,
+    "closing": 133009,
+    "accounts": {
+      "SCB": 70442,
+      "BKASH": 63,
+      "CASH": 8500
+    }
+  },
+  "2026-08": {
+    "opening": 133509,
+    "income": 80678,
+    "expense": 152598,
+    "closing": 61589,
+    "accounts": {
+      "SCB": 121009,
+      "BKASH": 0,
+      "CASH": 12500
+    }
+  },
+  "2026-09": {
+    "opening": 61537,
+    "income": 65583,
+    "expense": 51593.82,
+    "closing": 75526.18,
+    "accounts": {
+      "SCB": 56527,
+      "BKASH": 10,
+      "CASH": 5000
+    }
+  },
+  "2026-10": {
+    "opening": 75688,
+    "income": 64661,
+    "expense": 60163,
+    "closing": 80186,
+    "accounts": {
+      "SCB": 68453,
+      "BKASH": 235,
+      "CASH": 7000
+    }
+  },
+  "2026-11": {
+    "opening": 79586,
+    "income": 33404,
+    "expense": 33529,
+    "closing": 79461,
+    "accounts": {
+      "SCB": 75027,
+      "BKASH": 59,
+      "CASH": 4500
+    }
+  }
+}
